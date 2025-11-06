@@ -8,6 +8,7 @@ Quick Start Guide :
 - npm install
 
 # Create .env.local file 
+- Refer the give doc
 
 # Run frontend
 - npm run dev
