@@ -2,6 +2,8 @@
 "use client";
 import React, { useEffect } from "react";
 import { useRouter, usePathname } from 'next/navigation';
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 
 const Sidebar = ({ 
   activeTab, 
@@ -136,10 +138,18 @@ const Sidebar = ({
             {/* Logo Section */}
             <button
               onClick={handleLogoClick}
-              className="flex items-center space-x-3 transition-all duration-300 flex-1 hover:opacity-80"
+              className="flex items-center gap-2.5 lg:gap-3 transition-all duration-300 flex-1 hover:opacity-80"
             >
-              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-base lg:text-lg font-bold">TF</span>
+              {/* Logo Image */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 flex-shrink-0">
+                <Image
+                  src={logo}
+                  alt="TradeFlow Logo"
+                  width={48}
+                  height={48}
+                  priority
+                  className="w-full h-full object-contain"
+                />
               </div>
               <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent whitespace-nowrap">
                 TradeFlow

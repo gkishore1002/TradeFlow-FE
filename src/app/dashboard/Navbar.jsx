@@ -2,6 +2,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 
 const Navbar = ({ 
   activeTab, 
@@ -78,8 +80,8 @@ const Navbar = ({
   return (
     <nav className="bg-white shadow-sm border-b border-slate-200 relative z-30">
       {/* Top Bar */}
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-2">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 md:gap-4">
           {/* Left Section - Hamburger, Logo & Status */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
             {/* Hamburger Menu Button */}
@@ -99,12 +101,27 @@ const Navbar = ({
               )}
             </button>
 
-            {/* App Name - Colored Blue */}
-            <h2 className="text-lg sm:text-xl font-bold text-blue-600 whitespace-nowrap">
-              TradeFlow
-            </h2>
+            {/* Logo & App Name */}
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+              {/* Logo Image - Increased Size with Negative Margin */}
+              <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 flex-shrink-0 -my-2 sm:-my-2.5 md:-my-3">
+                <Image
+                  src={logo}
+                  alt="TradeFlow Logo"
+                  width={80}
+                  height={80}
+                  priority
+                  className="w-full h-full object-contain"
+                />
+              </div>
 
-            {/* Live Status - Next to App Name (OLD DESIGN) */}
+              {/* App Name with Gradient */}
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent whitespace-nowrap hidden sm:block">
+                TradeFlow
+              </h2>
+            </div>
+
+            {/* Live Status - Next to Logo & App Name */}
             <div className="flex items-center gap-1.5 sm:gap-2 ml-1 sm:ml-2">
               <div className={`w-2 h-2 rounded-full animate-pulse ${backendConnected ? 'bg-green-500' : 'bg-orange-500'}`}></div>
               <span className={`text-xs font-semibold whitespace-nowrap ${backendConnected ? 'text-green-600' : 'text-orange-600'}`}>

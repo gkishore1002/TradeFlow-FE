@@ -1,27 +1,35 @@
 // app/login/page.tsx
+import Image from "next/image";
 import AuthForm from "../../components/AuthForm";
+import logo from "@/assets/logo.png";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Left Side - Branding (hidden on mobile/tablet, visible on desktop) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 items-center justify-center p-6 lg:p-8 xl:p-12">
-        <div className="text-center space-y-6 lg:space-y-8 max-w-sm lg:max-w-md xl:max-w-lg">
+        <div className="text-center space-y-2 lg:space-y-2 xl:space-y-2 max-w-sm lg:max-w-md xl:max-w-lg">
           {/* Logo/Brand */}
           <div className="relative">
-            <div className="w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 mx-auto bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl lg:rounded-2xl shadow-xl flex items-center justify-center transform rotate-3">
-              <div className="text-white text-2xl lg:text-3xl xl:text-4xl font-bold">TF</div>
+            <div className="w-52 h-52 lg:w-72 lg:h-72 xl:w-72 xl:h-72 mx-auto flex items-center justify-center">
+              <Image
+                src={logo}
+                alt="TradeFlow Logo"
+                width={288}
+                height={288}
+                priority
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="absolute -top-1 -right-1 lg:-top-2 lg:-right-2 w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full shadow-lg"></div>
           </div>
           
           {/* App Name */}
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent -mt-2 lg:-mt-3 xl:-mt-4">
             TradeFlow
           </h1>
           
           {/* Tagline */}
-          <p className="text-lg lg:text-xl xl:text-2xl text-slate-600 font-medium leading-relaxed px-2">
+          <p className="text-lg lg:text-xl xl:text-2xl text-slate-600 font-medium leading-relaxed px-2 pt-2 lg:pt-3">
             Streamline your trading experience with intelligent analytics and seamless execution
           </p>
           
@@ -47,14 +55,21 @@ export default function LoginPage() {
       <div className="flex w-full lg:w-1/2 xl:w-2/5 items-center justify-center p-4 sm:p-6 md:p-8 lg:p-6 xl:p-8">
         <div className="max-w-xs sm:max-w-sm md:max-w-md w-full space-y-6 md:space-y-8">
           {/* Mobile/Tablet branding (visible on mobile/tablet, hidden on desktop) */}
-          <div className="text-center lg:hidden mb-6 md:mb-8">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center mb-3 md:mb-4">
-              <div className="text-white text-lg sm:text-xl md:text-2xl font-bold">TF</div>
+          <div className="text-center lg:hidden mb-3 md:mb-4">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 mx-auto flex items-center justify-center mb-1 md:mb-2">
+              <Image
+                src={logo}
+                alt="TradeFlow Logo"
+                width={160}
+                height={160}
+                priority
+                className="w-full h-full object-contain"
+              />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent -mt-1 md:-mt-2">
               TradeFlow
             </h1>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 mt-2 px-4">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 mt-1 md:mt-2 px-4">
               Your intelligent trading companion
             </p>
           </div>
