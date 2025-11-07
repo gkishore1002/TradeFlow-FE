@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Trash2, Eye, Edit2, Calendar, Tag, AlertTriangle, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Plus, X, Trash2, Eye, Edit2, Calendar, Tag, AlertTriangle, ChevronLeft, ChevronRight, Search, Image as ImageIcon } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
@@ -33,6 +33,7 @@ export default function MyStrategies() {
   const [backendConnected, setBackendConnected] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -41,7 +42,8 @@ export default function MyStrategies() {
     risk_level: "Low Risk",
     timeframe: "Intraday (1 day)",
     trading_rules: "",
-    additional_notes: ""
+    additional_notes: "",
+    images: []
   });
 
   // Show toast notification
@@ -62,7 +64,7 @@ export default function MyStrategies() {
     return null;
   };
 
-  // API Call with JWT
+  // FIXED: API Call with proper FormData + JSON handling
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
@@ -72,13 +74,19 @@ export default function MyStrategies() {
         return null;
       }
 
+      // Properly detect FormData
+      const isFormData = options.body instanceof FormData;
+      
+      // Build headers - ONLY add Content-Type for non-FormData
       const headers = {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...options.headers
       };
 
       console.log(`🔄 API Call: ${endpoint}`);
+      console.log(`📦 Is FormData: ${isFormData}`);
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers
@@ -92,11 +100,13 @@ export default function MyStrategies() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
       setBackendConnected(true);
+      console.log('✅ API Success:', data);
       return data;
     } catch (error) {
       console.error('API Error:', error);
@@ -111,7 +121,6 @@ export default function MyStrategies() {
       setLoading(true);
       setError("");
 
-      // Build query parameters
       const params = new URLSearchParams({
         page: page.toString(),
         per_page: '20',
@@ -195,11 +204,49 @@ export default function MyStrategies() {
     setSearchTerm(value);
   };
 
+  // UPDATED: Handle input change with file support
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target;
+    
+    if (type === 'file') {
+      // Handle image uploads
+      const fileArray = Array.from(files || []);
+      setFormData(prev => ({
+        ...prev,
+        images: fileArray
+      }));
+
+      // Create previews
+      const previews = [];
+      fileArray.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const preview = URL.createObjectURL(file);
+          previews.push({ file, preview });
+        }
+      });
+      setImagePreviews(previews);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
+  // Remove image preview
+  const removeImagePreview = (index) => {
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    const newImages = formData.images.filter((_, i) => i !== index);
+    
+    if (imagePreviews[index]) {
+      URL.revokeObjectURL(imagePreviews[index].preview);
+    }
+    
+    setImagePreviews(newPreviews);
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+  };
+
+  // UPDATED: Handle submit with FormData
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -212,21 +259,32 @@ export default function MyStrategies() {
       setSubmitting(true);
       setError("");
 
-      const strategyData = {
-        name: formData.name,
-        description: formData.description || null,
-        category: formData.category,
-        risk_level: formData.risk_level,
-        timeframe: formData.timeframe,
-        trading_rules: formData.trading_rules || null,
-        additional_notes: formData.additional_notes || null
-      };
+      // UPDATED: Always use FormData for consistency
+      const form = new FormData();
+      form.append('name', formData.name);
+      form.append('category', formData.category);
+      form.append('risk_level', formData.risk_level);
+      form.append('timeframe', formData.timeframe);
+      
+      if (formData.description) form.append('description', formData.description);
+      if (formData.trading_rules) form.append('trading_rules', formData.trading_rules);
+      if (formData.additional_notes) form.append('additional_notes', formData.additional_notes);
+      
+      // UPDATED: Append images
+      formData.images.forEach(file => {
+        form.append('images', file);
+      });
+
+      console.log('📤 Submitting FormData with:');
+      console.log('   - Name:', formData.name);
+      console.log('   - Category:', formData.category);
+      console.log('   - Images:', formData.images.length);
 
       if (editingStrategy) {
         // Update existing strategy
         await apiCall(`/api/strategies/${editingStrategy.id}`, {
           method: "PUT",
-          body: JSON.stringify(strategyData)
+          body: form
         });
         setSuccess('✅ Strategy updated successfully!');
         showToast('Strategy updated successfully!', 'success');
@@ -234,7 +292,7 @@ export default function MyStrategies() {
         // Create new strategy
         await apiCall('/api/strategies', {
           method: "POST",
-          body: JSON.stringify(strategyData)
+          body: form
         });
         setSuccess('✅ Strategy created successfully!');
         showToast('Strategy created successfully!', 'success');
@@ -250,8 +308,10 @@ export default function MyStrategies() {
         risk_level: "Low Risk",
         timeframe: "Intraday (1 day)",
         trading_rules: "",
-        additional_notes: ""
+        additional_notes: "",
+        images: []
       });
+      setImagePreviews([]);
 
       // Refresh list
       await fetchStrategies(pagination.page, searchQuery);
@@ -276,8 +336,11 @@ export default function MyStrategies() {
       risk_level: "Low Risk",
       timeframe: "Intraday (1 day)",
       trading_rules: "",
-      additional_notes: ""
+      additional_notes: "",
+      images: []
     });
+    imagePreviews.forEach(p => URL.revokeObjectURL(p.preview));
+    setImagePreviews([]);
   };
 
   const handleEditStrategy = (strategy) => {
@@ -289,8 +352,10 @@ export default function MyStrategies() {
       risk_level: strategy.risk_level || "Low Risk",
       timeframe: strategy.timeframe || "Intraday (1 day)",
       trading_rules: strategy.trading_rules || "",
-      additional_notes: strategy.additional_notes || ""
+      additional_notes: strategy.additional_notes || "",
+      images: [] // Reset for new uploads
     });
+    setImagePreviews([]);
     setShowForm(true);
   };
 
@@ -603,19 +668,81 @@ export default function MyStrategies() {
               />
             </div>
 
+            {/* UPDATED: Image Upload Field */}
+            <div>
+              <label className="block text-sm font-semibold text-black mb-2">
+                Upload Images
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
+                <input
+                  type="file"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleInputChange}
+                  className="hidden"
+                  id="strategy-image-upload"
+                />
+                <label htmlFor="strategy-image-upload" className="cursor-pointer block">
+                  <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
+                </label>
+                {formData.images.length > 0 && (
+                  <div className="mt-4 text-sm text-green-600 font-medium">
+                    ✓ {formData.images.length} image(s) selected
+                  </div>
+                )}
+              </div>
+
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {imagePreviews.map((preview, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={preview.preview}
+                          alt={`Preview ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImagePreview(idx)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
+                        >
+                          ×
+                        </button>
+                        <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Form Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-sm sm:text-base disabled:opacity-50"
+                className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-sm sm:text-base disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {submitting ? 'Saving...' : (editingStrategy ? 'Update Strategy' : 'Create Strategy')}
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : (
+                  editingStrategy ? 'Update Strategy' : 'Create Strategy'
+                )}
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="w-full sm:flex-1 bg-gray-100 text-black py-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 text-sm sm:text-base"
+                disabled={submitting}
+                className="w-full sm:flex-1 bg-gray-100 text-black py-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 text-sm sm:text-base disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -714,6 +841,16 @@ export default function MyStrategies() {
                         <span className="font-medium">Timeframe:</span> <span className="truncate">{strategy.timeframe}</span>
                       </p>
                     </div>
+
+                    {/* UPDATED: Images Badge */}
+                    {strategy.images && strategy.images.length > 0 && (
+                      <div className="mb-3 sm:mb-4">
+                        <div className="flex items-center gap-1.5 text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full w-fit font-medium">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>{strategy.images.length} image(s)</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Description Preview */}
                     {strategy.description && (
@@ -840,7 +977,7 @@ export default function MyStrategies() {
         </div>
       )}
 
-      {/* Strategy View Modal */}
+      {/* Strategy View Modal - UPDATED WITH IMAGES */}
       {showStrategyModal && selectedStrategy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
@@ -880,6 +1017,33 @@ export default function MyStrategies() {
                   </div>
                 </div>
               </div>
+
+              {/* UPDATED: Images Section */}
+              {selectedStrategy.images && selectedStrategy.images.length > 0 && (
+                <div>
+                  <h4 className="text-base sm:text-lg font-semibold text-black mb-3">Images ({selectedStrategy.images.length})</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {selectedStrategy.images.map((url, idx) => (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative group"
+                      >
+                        <img
+                          src={url}
+                          alt={`Strategy image ${idx + 1}`}
+                          className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-200 group-hover:opacity-80 transition"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
+                          <span className="text-white text-xs sm:text-sm font-medium">Open</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {selectedStrategy.description && (
                 <div>

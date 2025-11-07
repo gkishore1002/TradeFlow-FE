@@ -9,7 +9,9 @@ import {
   Security as SecurityIcon,
 } from "@mui/icons-material";
 
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 
 export default function Profile() {
   const router = useRouter();
@@ -28,6 +30,7 @@ export default function Profile() {
   const [isMobile, setIsMobile] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
 
+
   // Get JWT Token
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
@@ -35,6 +38,7 @@ export default function Profile() {
     }
     return null;
   };
+
 
   // API Call with JWT - MATCHES YOUR BACKEND ENDPOINTS
   const apiCall = useCallback(async (endpoint, options = {}) => {
@@ -47,11 +51,13 @@ export default function Profile() {
         return null;
       }
 
+
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         ...options.headers
       };
+
 
       console.log(`📡 API Call: ${API_BASE_URL}${endpoint}`);
       
@@ -61,6 +67,7 @@ export default function Profile() {
         controller.abort();
       }, 8000);
 
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: options.method || 'GET',
         headers,
@@ -68,7 +75,9 @@ export default function Profile() {
         signal: controller.signal
       });
 
+
       clearTimeout(timeoutId);
+
 
       if (response.status === 401) {
         console.warn('🔴 Unauthorized');
@@ -78,11 +87,13 @@ export default function Profile() {
         return null;
       }
 
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
         console.error('🔴 API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
+
 
       const data = await response.json();
       console.log('✅ API Success');
@@ -96,6 +107,7 @@ export default function Profile() {
       return null;
     }
   }, [router]);
+
 
   // Load user profile - CALLS /api/auth/profile (YOUR BACKEND)
   const loadUserProfile = useCallback(async () => {
@@ -112,14 +124,19 @@ export default function Profile() {
         setFirstName(user.first_name || "");
         setLastName(user.last_name || "");
         setEmail(user.email || "");
-        setPhone(user.phone || "");
-        setAddress(user.address || "");
+        // CHANGED: Phone is now stored in 'bio' field in backend
+        setPhone(user.bio || "");
+        // CHANGED: Address is now stored in 'location' field in backend
+        setAddress(user.location || "");
+
 
         localStorage.setItem("first_name", user.first_name || "");
         localStorage.setItem("last_name", user.last_name || "");
         localStorage.setItem("email", user.email || "");
-        localStorage.setItem("phone", user.phone || "");
-        localStorage.setItem("address", user.address || "");
+        // CHANGED: Store phone from bio
+        localStorage.setItem("phone", user.bio || "");
+        // CHANGED: Store address from location
+        localStorage.setItem("address", user.location || "");
         setBackendConnected(true);
       } else {
         console.log('📦 Loading from localStorage');
@@ -149,6 +166,7 @@ export default function Profile() {
     }
   }, [apiCall]);
 
+
   // Validate form
   const validateForm = () => {
     if (!firstName.trim()) {
@@ -168,36 +186,44 @@ export default function Profile() {
       return false;
     }
     if (!phone.trim()) {
-      setErrorMessage("Phone is required");
+      setErrorMessage("Contact number is required");
       return false;
     }
     return true;
   };
 
+
   // Save profile - CALLS /api/auth/profile with PUT (YOUR BACKEND)
   const handleSave = async () => {
     if (!validateForm()) return;
 
+
     setIsSaving(true);
     setErrorMessage("");
     setSuccessMessage("");
+
 
     try {
       const profileData = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         email: email.trim(),
-        phone: phone.trim(),
-        address: address.trim()
+        // CHANGED: Phone is sent as 'bio' field
+        bio: phone.trim(),
+        // CHANGED: Address is sent as 'location' field
+        location: address.trim()
       };
 
+
       console.log('💾 Saving:', profileData);
+
 
       // MATCHES YOUR BACKEND ENDPOINT: PUT /api/auth/profile
       const result = await apiCall('/api/auth/profile', {
         method: 'PUT',
         body: profileData
       });
+
 
       if (result && result.user) {
         console.log('✅ Profile saved');
@@ -206,8 +232,11 @@ export default function Profile() {
         localStorage.setItem("first_name", firstName);
         localStorage.setItem("last_name", lastName);
         localStorage.setItem("email", email);
+        // CHANGED: Store phone in localStorage
         localStorage.setItem("phone", phone);
+        // CHANGED: Store address in localStorage
         localStorage.setItem("address", address);
+
 
         setIsEditing(false);
         setTimeout(() => setSuccessMessage(""), 3000);
@@ -222,11 +251,13 @@ export default function Profile() {
     }
   };
 
+
   const handleCancel = () => {
     setIsEditing(false);
     setErrorMessage("");
     loadUserProfile();
   };
+
 
   // Mobile detection
   useEffect(() => {
@@ -238,10 +269,12 @@ export default function Profile() {
       }
     };
 
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
 
   // Initial load
   useEffect(() => {
@@ -253,9 +286,11 @@ export default function Profile() {
     loadUserProfile();
   }, [loadUserProfile, router]);
 
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -268,15 +303,18 @@ export default function Profile() {
     router.push("/login");
   };
 
+
   const navigateToDashboard = () => {
     setSidebarOpen(false);
     router.push("/dashboard");
   };
 
+
   const tabs = [
     { id: "profile", label: "Profile", icon: PersonIcon },
     { id: "password", label: "Manage Password", icon: SecurityIcon },
   ];
+
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -287,6 +325,7 @@ export default function Profile() {
         handleLogout={handleLogout}
       />
 
+
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar
           activeTab="profile"
@@ -296,6 +335,7 @@ export default function Profile() {
           sidebarOpen={sidebarOpen}
           backendConnected={backendConnected}
         />
+
 
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
           <div className="max-w-6xl mx-auto">
@@ -313,12 +353,14 @@ export default function Profile() {
               <span className="text-slate-600 font-medium">Profile</span>
             </div>
 
+
             {/* Connection Status */}
             {!backendConnected && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-orange-800 text-sm">ℹ️ Using local storage - backend offline</p>
               </div>
             )}
+
 
             {/* Success Message */}
             {successMessage && (
@@ -330,6 +372,7 @@ export default function Profile() {
               </div>
             )}
 
+
             {/* Error Message */}
             {errorMessage && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
@@ -339,6 +382,7 @@ export default function Profile() {
                 <span className="text-red-800 font-medium text-xs sm:text-sm">{errorMessage}</span>
               </div>
             )}
+
 
             {/* Loading State */}
             {isLoading ? (
@@ -381,6 +425,7 @@ export default function Profile() {
                   </div>
                 </div>
 
+
                 {/* Right Content */}
                 <div className="md:col-span-3">
                   {/* Profile Tab */}
@@ -401,6 +446,7 @@ export default function Profile() {
                           </button>
                         )}
                       </div>
+
 
                       {/* Content */}
                       <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 space-y-6">
@@ -424,6 +470,7 @@ export default function Profile() {
                               />
                             </div>
 
+
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
                                 Last Name <span className="text-red-500">*</span>
@@ -440,6 +487,7 @@ export default function Profile() {
                                 }`}
                               />
                             </div>
+
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
@@ -458,6 +506,7 @@ export default function Profile() {
                               />
                             </div>
                           </div>
+
 
                           {/* Row 2 */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -478,6 +527,7 @@ export default function Profile() {
                               />
                             </div>
 
+
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
                                 Address
@@ -497,6 +547,7 @@ export default function Profile() {
                           </div>
                         </div>
                       </div>
+
 
                       {/* Footer */}
                       <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
@@ -534,6 +585,7 @@ export default function Profile() {
                     </div>
                   )}
 
+
                   {/* Password Tab */}
                   {activeTab === "password" && (
                     <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
@@ -557,6 +609,7 @@ export default function Profile() {
         </main>
       </div>
 
+
       <style jsx>{`
         @keyframes fade-in {
           from {
@@ -571,6 +624,7 @@ export default function Profile() {
         .animate-fade-in {
           animation: fade-in 0.3s ease-out;
         }
+
 
         input:-webkit-autofill,
         input:-webkit-autofill:hover,

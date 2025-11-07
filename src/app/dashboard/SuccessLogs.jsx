@@ -3,6 +3,24 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  Image as ImageIcon,
+} from "@mui/icons-material";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
@@ -248,7 +266,7 @@ export default function SuccessLogs() {
     }
 
     const loadData = async () => {
-      setLoading(true);
+      setLoading(false);
       setError(null);
       try {
         await Promise.all([
@@ -260,8 +278,6 @@ export default function SuccessLogs() {
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Failed to load data');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -286,11 +302,6 @@ export default function SuccessLogs() {
       setCurrentPage(newPage);
       fetchStrategyWiseTrades(newPage, searchQuery);
     }
-  };
-
-  const handleItemsPerPageChange = (newItemsPerPage) => {
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1);
   };
 
   const handleInputChange = (e) => {
@@ -357,7 +368,7 @@ export default function SuccessLogs() {
       if (formData.trade_notes) formDataObj.append('trade_notes', formData.trade_notes);
 
       selectedFiles.forEach((file) => {
-        formDataObj.append('screenshots', file);
+        formDataObj.append('images', file);
       });
 
       await apiCall('/api/trade-logs', {
@@ -445,6 +456,12 @@ export default function SuccessLogs() {
     }).format(amount);
   };
 
+  const getWinRateColor = (winRate) => {
+    if (winRate >= 60) return 'success';
+    if (winRate >= 40) return 'warning';
+    return 'error';
+  };
+
   const ToastContainer = () => (
     <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
       {toasts.map(toast => (
@@ -475,7 +492,7 @@ export default function SuccessLogs() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-8">
+    <div className="space-y-4 lg:space-y-8 p-4 sm:p-0">
       <ToastContainer />
 
       {error && (
@@ -501,11 +518,11 @@ export default function SuccessLogs() {
       )}
 
       {/* Trading Logs Header */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 lg:p-8 shadow-lg border border-white/20">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-black">Trading Logs</h2>
-            <p className="text-black mt-1 text-sm lg:text-base">
+            <h2 className="text-xl sm:text-2xl font-bold text-black">Trading Logs</h2>
+            <p className="text-black mt-1 text-sm sm:text-base">
               Track and analyze your trading performance
               {!backendConnected && <span className="text-orange-600 ml-2">⚠️ Offline</span>}
             </p>
@@ -513,197 +530,231 @@ export default function SuccessLogs() {
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="w-full sm:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <span className="hidden sm:inline">Add Trade Log</span>
-              <span className="sm:hidden">Add</span>
+              <span>Add Trade Log</span>
             </button>
           )}
         </div>
+      </div>
 
-        {showForm && (
-          <div className="bg-slate-50 rounded-xl p-4 lg:p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-black mb-4">Add New Trade Log</h3>
+      {/* Form Section */}
+      {showForm && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+          <h3 className="text-lg sm:text-xl font-bold text-black mb-4 sm:mb-6">Add New Trade Log</h3>
 
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Symbol *</label>
-                  <input
-                    type="text"
-                    name="symbol"
-                    value={formData.symbol}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                    placeholder="e.g., AAPL, TSLA"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Entry Price *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    name="entry_price"
-                    value={formData.entry_price}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                    placeholder="150.25"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Exit Price *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    name="exit_price"
-                    value={formData.exit_price}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                    placeholder="155.80"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Quantity *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                    placeholder="100"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Entry Date *</label>
-                  <input
-                    type="date"
-                    name="entry_date"
-                    value={formData.entry_date}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Exit Date</label>
-                  <input
-                    type="date"
-                    name="exit_date"
-                    value={formData.exit_date}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-black mb-2">Trading Strategy</label>
-                <select
-                  name="trading_strategy"
-                  value={formData.trading_strategy}
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            {/* Form Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
+                <input
+                  type="text"
+                  name="symbol"
+                  value={formData.symbol}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
-                >
-                  <option value="">Select a strategy...</option>
-                  {strategies.map((strategy) => (
-                    <option key={strategy.id} value={strategy.name}>
-                      {strategy.name} ({strategy.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-black mb-2">Screenshots</label>
-                <div className="space-y-4">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-
-                  {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={preview.preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border border-slate-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeFile(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                          <p className="text-xs text-black mt-1 truncate">{preview.file.name}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-black mb-2">Trade Notes</label>
-                <textarea
-                  name="trade_notes"
-                  value={formData.trade_notes}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white resize-none"
-                  placeholder="Trade rationale, lessons learned, observations..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  placeholder="AAPL"
+                  required
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 pt-4">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-                >
-                  {submitting ? 'Adding...' : 'Add Trade Log'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={submitting}
-                  className="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-black px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-                >
-                  Cancel
-                </button>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  name="entry_price"
+                  value={formData.entry_price}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  placeholder="150.25"
+                  required
+                />
               </div>
-            </form>
-          </div>
-        )}
-      </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  name="exit_price"
+                  value={formData.exit_price}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  placeholder="155.80"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
+                <input
+                  type="number"
+                  min="1"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  placeholder="100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date *</label>
+                <input
+                  type="date"
+                  name="entry_date"
+                  value={formData.entry_date}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date</label>
+                <input
+                  type="date"
+                  name="exit_date"
+                  value={formData.exit_date}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Strategy */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-2">Trading Strategy</label>
+              <select
+                name="trading_strategy"
+                value={formData.trading_strategy}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white appearance-none cursor-pointer"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1.5em 1.5em',
+                  paddingRight: '2.5rem'
+                }}
+              >
+                <option value="">Select a strategy...</option>
+                {strategies.map((strategy) => (
+                  <option key={strategy.id} value={strategy.name}>
+                    {strategy.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Images Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="log-image-upload"
+                />
+                <label htmlFor="log-image-upload" className="cursor-pointer block">
+                  <ImageIcon sx={{ fontSize: '2rem', color: '#cbd5e1', marginBottom: '0.5rem' }} />
+                  <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
+                </label>
+                {selectedFiles.length > 0 && (
+                  <div className="mt-4 text-sm text-green-600 font-medium">
+                    ✓ {selectedFiles.length} image(s) selected
+                  </div>
+                )}
+              </div>
+
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {imagePreviews.map((preview, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={preview.preview}
+                          alt={`Preview ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFile(idx)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
+                        >
+                          ×
+                        </button>
+                        <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Trade Notes */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Notes</label>
+              <textarea
+                name="trade_notes"
+                value={formData.trade_notes}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white resize-none"
+                placeholder="Trade rationale, lessons learned..."
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={submitting}
+                className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Add Trade Log'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Strategy Performance Section */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
-        <div className="xl:col-span-2 bg-white/80 backdrop-blur-sm rounded-2xl p-4 lg:p-6 shadow-lg border border-white/20">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="xl:col-span-2 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg lg:text-xl font-bold text-black">Strategy Performance</h2>
-              <p className="text-black mt-1 text-sm lg:text-base">Performance breakdown by trading strategy</p>
+              <h2 className="text-lg sm:text-xl font-bold text-black">Strategy Performance</h2>
+              <p className="text-black mt-1 text-xs sm:text-sm">Performance breakdown by trading strategy</p>
             </div>
           </div>
 
@@ -712,10 +763,10 @@ export default function SuccessLogs() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search strategies by name..."
+                placeholder="Search strategies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-white text-black"
+                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
               />
               <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -724,28 +775,26 @@ export default function SuccessLogs() {
           </div>
 
           {strategyTrades.length === 0 ? (
-            <div className="text-center py-8 lg:py-12">
-              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-base lg:text-lg font-semibold text-black mb-2">No Strategy Data Yet</h3>
-              <p className="text-black text-sm lg:text-base">Add trades with strategies to see performance breakdown</p>
+            <div className="text-center py-8 sm:py-12">
+              <svg className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-2">No Strategy Data Yet</h3>
+              <p className="text-black text-xs sm:text-sm">Add trades with strategies to see performance</p>
             </div>
           ) : (
             <>
-              {/* Mobile Cards View */}
-              <div className="block lg:hidden space-y-4">
+              {/* Mobile Cards */}
+              <div className="block md:hidden space-y-4">
                 {strategyTrades.map((strategy, index) => (
-                  <div key={index} className="bg-gradient-to-r from-white to-slate-50 rounded-xl p-4 border border-slate-200 shadow-sm">
+                  <div key={index} className="bg-gradient-to-r from-white to-slate-50 rounded-lg p-4 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-base font-bold text-black truncate">{strategy.strategy_name}</h3>
                         <div className="flex items-center space-x-2 text-xs text-black mt-1">
                           <span className="flex items-center">
                             <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                            {strategy.total_trades} total
+                            {strategy.total_trades} trades
                           </span>
                           <span className="flex items-center">
                             <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
@@ -753,152 +802,123 @@ export default function SuccessLogs() {
                           </span>
                         </div>
                       </div>
-                      <div className={`w-3 h-3 rounded-full ${
-                        strategy.win_rate >= 60 ? 'bg-green-500' :
-                        strategy.win_rate >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}></div>
+                      <Chip
+                        label={`${strategy.win_rate}%`}
+                        color={getWinRateColor(strategy.win_rate)}
+                        size="small"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                      <div>
-                        <p className="text-slate-500">Win Rate</p>
-                        <p className={`font-bold ${
-                          strategy.win_rate >= 60 ? 'text-green-600' :
-                          strategy.win_rate >= 40 ? 'text-yellow-600' : 'text-red-600'
-                        }`}>
-                          {strategy.win_rate}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Total P&L</p>
-                        <p className={`font-bold ${strategy.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(strategy.total_pnl)}
-                        </p>
-                      </div>
-                    </div>
-
                     <button
                       onClick={() => handleViewStrategyTrades(strategy)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors text-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      <span>View Trades ({strategy.total_trades})</span>
+                      View Trades ({strategy.total_trades})
                     </button>
                   </div>
                 ))}
               </div>
 
-              {/* Desktop Cards View */}
-              <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-4">
-                {strategyTrades.map((strategy, index) => (
-                  <div key={index} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-black mb-2 truncate">{strategy.strategy_name}</h3>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-black">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-200">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-1.5"></div>
-                            {strategy.total_trades} trades
-                          </span>
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-green-200">
-                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full mr-1.5"></div>
-                            {strategy.success_trades} wins
-                          </span>
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-200">
-                            <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-1.5"></div>
-                            {strategy.loss_trades} losses
-                          </span>
-                        </div>
-                      </div>
-                      <div className={`flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold ${
-                        strategy.win_rate >= 60 ? 'bg-green-100 text-green-600' :
-                        strategy.win_rate >= 40 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
-                      }`}>
-                        {strategy.win_rate}%
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 mb-4 pt-4 border-t border-blue-200">
-                      <div className="text-center">
-                        <p className="text-xs text-black font-medium mb-1">Total P&L</p>
-                        <p className={`text-lg font-bold ${strategy.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(strategy.total_pnl)}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-black font-medium mb-1">Avg P&L</p>
-                        <p className={`text-lg font-bold ${strategy.avg_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(strategy.avg_pnl || 0)}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-black font-medium mb-1">Best Trade</p>
-                        <p className="text-lg font-bold text-green-600">
-                          {formatCurrency(strategy.best_trade || 0)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleViewStrategyTrades(strategy)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      <span>View Trades ({strategy.total_trades})</span>
-                    </button>
-                  </div>
-                ))}
+              {/* Desktop Table */}
+              <div className="hidden md:block bg-white/80 backdrop-blur-sm rounded-lg overflow-hidden">
+                <TableContainer component={Paper} elevation={0}>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#f1f5f9' }}>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Strategy</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Total</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Wins</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Losses</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Win Rate</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Total P&L</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {strategyTrades.map((strategy, index) => (
+                        <TableRow key={index} hover sx={{ height: '72px' }}>
+                          <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500, padding: '16px' }}>{strategy.strategy_name}</TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.875rem', padding: '16px' }}>
+                            <Chip label={strategy.total_trades} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 600, padding: '16px' }}>
+                            {strategy.success_trades}
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.875rem', color: '#ef4444', fontWeight: 600, padding: '16px' }}>
+                            {strategy.loss_trades}
+                          </TableCell>
+                          <TableCell align="right" sx={{ padding: '16px' }}>
+                            <Chip
+                              label={`${strategy.win_rate}%`}
+                              color={getWinRateColor(strategy.win_rate)}
+                              size="small"
+                              sx={{ fontSize: '0.75rem' }}
+                            />
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 600, padding: '16px', color: strategy.total_pnl >= 0 ? '#10b981' : '#ef4444' }}>
+                            {formatCurrency(strategy.total_pnl)}
+                          </TableCell>
+                          <TableCell align="center" sx={{ padding: '16px' }}>
+                            <Tooltip title="View Trades">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleViewStrategyTrades(strategy)}
+                                sx={{ color: '#2563eb' }}
+                              >
+                                <VisibilityIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </div>
             </>
           )}
         </div>
 
         {/* Statistics Card */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 lg:p-6 shadow-lg border border-green-200">
-            <h3 className="text-base lg:text-lg font-bold text-black mb-4">Overall Stats</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-sm text-black">Total Trades</span>
-                <span className="text-xl lg:text-2xl font-bold text-blue-600">{stats.performance?.total_trades || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-sm text-black">Win Rate</span>
-                <span className="text-xl lg:text-2xl font-bold text-green-600">{stats.performance?.win_rate?.toFixed(1) || 0}%</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-sm text-black">Total P&L</span>
-                <span className={`text-xl lg:text-2xl font-bold ${(stats.performance?.total_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(stats.performance?.total_pnl || 0)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-sm text-black">Winning Trades</span>
-                <span className="text-xl lg:text-2xl font-bold text-green-600">{stats.counts?.success || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-sm text-black">Losing Trades</span>
-                <span className="text-xl lg:text-2xl font-bold text-red-600">{stats.counts?.loss || 0}</span>
-              </div>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-green-200">
+          <h3 className="text-base sm:text-lg font-bold text-black mb-4">Overall Stats</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+              <span className="text-xs sm:text-sm text-black">Total Trades</span>
+              <span className="text-lg sm:text-2xl font-bold text-blue-600">{stats.performance?.total_trades || 0}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+              <span className="text-xs sm:text-sm text-black">Win Rate</span>
+              <span className="text-lg sm:text-2xl font-bold text-green-600">{stats.performance?.win_rate?.toFixed(1) || 0}%</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+              <span className="text-xs sm:text-sm text-black">Total P&L</span>
+              <span className={`text-lg sm:text-2xl font-bold ${(stats.performance?.total_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(stats.performance?.total_pnl || 0)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+              <span className="text-xs sm:text-sm text-black">Wins</span>
+              <span className="text-lg sm:text-2xl font-bold text-green-600">{stats.counts?.success || 0}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+              <span className="text-xs sm:text-sm text-black">Losses</span>
+              <span className="text-lg sm:text-2xl font-bold text-red-600">{stats.counts?.loss || 0}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Trades Modal */}
+      {/* Trades Modal - UPDATED with MUI Table */}
       {showTradesModal && selectedStrategy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 p-6 flex items-center justify-between">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-white">{selectedStrategy.strategy_name}</h2>
-                <p className="text-blue-100 text-sm mt-1">{selectedStrategy.total_trades} trades • Win Rate: {selectedStrategy.win_rate}%</p>
+                <h2 className="text-lg sm:text-2xl font-bold text-white">{selectedStrategy.strategy_name}</h2>
+                <p className="text-blue-100 text-xs sm:text-sm mt-1">{selectedStrategy.total_trades} trades • Win Rate: {selectedStrategy.win_rate}%</p>
               </div>
               <button
                 onClick={() => setShowTradesModal(false)}
@@ -910,45 +930,208 @@ export default function SuccessLogs() {
               </button>
             </div>
 
-            <div className="p-4 lg:p-6">
+            {/* Modal Content */}
+            <div className="p-4 sm:p-6">
               {selectedStrategy.trades && selectedStrategy.trades.length > 0 ? (
-                <div className="space-y-3 overflow-y-auto max-h-[calc(90vh-140px)]">
-                  {selectedStrategy.trades.map((trade, index) => {
-                    const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
-                    return (
-                      <div 
-                        key={index}
-                        onClick={() => handleViewTradeDetail(trade)}
-                        className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="font-bold text-black">{trade.symbol}</h4>
-                              <span className={`px-2 py-1 rounded text-xs font-medium text-white ${pnl > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
-                                {pnl > 0 ? 'Win' : 'Loss'}
-                              </span>
+                <>
+                  {/* Mobile View */}
+                  <div className="block md:hidden space-y-3">
+                    {selectedStrategy.trades.map((trade, index) => {
+                      const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+                      return (
+                        <div 
+                          key={index}
+                          className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 border border-slate-200 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-black">{trade.symbol}</h4>
+                                {trade.image_urls && trade.image_urls.length > 0 && (
+                                  <Chip
+                                    icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
+                                    label={trade.image_urls.length}
+                                    size="small"
+                                    sx={{ fontSize: '0.75rem' }}
+                                  />
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-600 mt-1">{formatDate(trade.entry_date)}</p>
                             </div>
-                            <p className="text-sm text-black">
-                              Entry: ${trade.entry_price} | Exit: ${trade.exit_price} | Qty: {trade.quantity}
-                            </p>
+                            <Chip
+                              label={pnl > 0 ? 'Win' : 'Loss'}
+                              color={pnl > 0 ? 'success' : 'error'}
+                              size="small"
+                              sx={{ fontSize: '0.75rem' }}
+                            />
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className={`text-lg font-bold ${pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(pnl)}
-                            </p>
-                            <p className="text-xs text-slate-600">{formatDate(trade.entry_date)}</p>
+                          <div className="text-xs text-black space-y-1">
+                            <p>Entry: ₹{trade.entry_price} | Exit: ₹{trade.exit_price}</p>
+                            <p>Qty: {trade.quantity} | P&L: <span className={pnl > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{formatCurrency(pnl)}</span></p>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop Table */}
+                  <div className="hidden md:block">
+                    <TableContainer component={Paper} elevation={0}>
+                      <Table>
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: '#f1f5f9' }}>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Symbol</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Entry</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Exit</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Qty</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>P&L</TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Result</TableCell>
+                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Images</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {selectedStrategy.trades.map((trade, index) => {
+                            const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+                            return (
+                              <TableRow key={index} hover sx={{ height: '72px' }}>
+                                <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500, padding: '16px' }}>{trade.symbol}</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>₹{trade.entry_price}</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>₹{trade.exit_price}</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>{trade.quantity}</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 600, padding: '16px', color: pnl >= 0 ? '#10b981' : '#ef4444' }}>
+                                  {formatCurrency(pnl)}
+                                </TableCell>
+                                <TableCell sx={{ padding: '16px' }}>
+                                  <Chip
+                                    label={pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break'}
+                                    color={pnl > 0 ? 'success' : pnl < 0 ? 'error' : 'default'}
+                                    size="small"
+                                    sx={{ fontSize: '0.75rem' }}
+                                  />
+                                </TableCell>
+                                <TableCell sx={{ padding: '16px' }}>
+                                  {trade.image_urls && trade.image_urls.length > 0 ? (
+                                    <Chip
+                                      icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
+                                      label={trade.image_urls.length}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ fontSize: '0.75rem' }}
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-slate-500">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell align="center" sx={{ padding: '16px' }}>
+                                  <Tooltip title="View Details">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleViewTradeDetail(trade)}
+                                      sx={{ color: '#2563eb' }}
+                                    >
+                                      <VisibilityIcon sx={{ fontSize: '1rem' }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </div>
+                </>
               ) : (
-                <div className="text-center py-8">
+                <div className="text-center py-12">
                   <p className="text-black">No trades for this strategy</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trade Detail Modal */}
+      {showTradeDetailModal && selectedTrade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl">
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
+              <h2 className="text-lg font-bold text-slate-900">{selectedTrade.symbol} - Trade Details</h2>
+              <button
+                onClick={() => setShowTradeDetailModal(false)}
+                className="text-slate-600 hover:text-slate-900"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-6">
+              {/* Price Info */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-blue-700 font-medium mb-1">Entry</p>
+                  <p className="font-bold text-slate-900 text-sm">₹{selectedTrade.entry_price}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-green-700 font-medium mb-1">Exit</p>
+                  <p className="font-bold text-slate-900 text-sm">₹{selectedTrade.exit_price}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-slate-700 font-medium mb-1">Qty</p>
+                  <p className="font-bold text-slate-900 text-sm">{selectedTrade.quantity}</p>
+                </div>
+                <div className="bg-indigo-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-indigo-700 font-medium mb-1">P&L</p>
+                  <p className={`font-bold text-sm ${((selectedTrade.exit_price - selectedTrade.entry_price) * selectedTrade.quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency((selectedTrade.exit_price - selectedTrade.entry_price) * selectedTrade.quantity)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Images */}
+              {selectedTrade.image_urls && selectedTrade.image_urls.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 mb-3">Images ({selectedTrade.image_urls.length})</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedTrade.image_urls.map((url, idx) => (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative group"
+                      >
+                        <img
+                          src={url}
+                          alt={`Trade image ${idx + 1}`}
+                          className="w-full h-40 object-cover rounded-lg border border-slate-200 group-hover:opacity-80 transition"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
+                          <span className="text-white text-sm font-medium">Open</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedTrade.trade_notes && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 mb-2">Notes</p>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-slate-700 text-sm whitespace-pre-wrap">{selectedTrade.trade_notes}</p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowTradeDetailModal(false)}
+                className="w-full px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
