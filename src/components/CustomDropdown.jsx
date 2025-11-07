@@ -74,6 +74,7 @@ export default function CustomDropdown({
       {/* Dropdown Button */}
       <div className="relative">
         <button
+          type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
           className={`w-full px-3 py-2 text-left bg-white border border-slate-300 rounded-lg shadow-sm font-medium text-slate-900 transition-all duration-200 flex items-center justify-between text-sm ${
@@ -134,6 +135,7 @@ export default function CustomDropdown({
                 filteredOptions.map((option, index) => (
                   <button
                     key={option.value}
+                    type="button"
                     onClick={() => handleSelect(option)}
                     className={`w-full px-3 py-2 text-left text-sm font-medium transition-colors duration-100 flex items-center justify-between ${
                       selectedOption?.value === option.value

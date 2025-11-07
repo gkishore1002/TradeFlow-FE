@@ -53,23 +53,17 @@ export default function MyJournal() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Trade Form Data
+  // Trade Form Data - TradeLog FIELDS ONLY
   const [formData, setFormData] = useState({
     symbol: "",
     entry_price: "",
     exit_price: "",
     quantity: "",
-    trade_type: "Long",
-    strategy_id: "",
-    trading_strategy: "",
-    entry_reason: "",
-    exit_reason: "",
-    emotions: "",
-    lessons_learned: "",
-    tags: "",
-    trade_notes: "",
     entry_date: "",
     exit_date: "",
+    strategy_id: "",
+    trading_strategy: "",
+    trade_notes: "",
     images: []
   });
 
@@ -91,7 +85,7 @@ export default function MyJournal() {
     return null;
   };
 
-  // API call wrapper with proper FormData + JSON handling
+  // API call wrapper
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
@@ -101,7 +95,6 @@ export default function MyJournal() {
         return null;
       }
 
-      // Properly detect FormData
       const isFormData = options.body instanceof FormData;
       const headers = {
         'Authorization': `Bearer ${token}`,
@@ -110,7 +103,6 @@ export default function MyJournal() {
       };
 
       console.log(`🔄 API Call: ${endpoint}`);
-      console.log(`📦 Is FormData: ${isFormData}`);
       
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
@@ -152,7 +144,7 @@ export default function MyJournal() {
     return params;
   };
 
-  // Load trades with pagination and search
+  // Load trades
   const loadTrades = useCallback(async () => {
     try {
       setLoading(true);
@@ -214,19 +206,17 @@ export default function MyJournal() {
     return () => clearTimeout(delayedSearch);
   }, [searchTerm, searchQuery]);
 
-  // Form handlers with image preview support
+  // Form change handler
   const handleFormChange = (e) => {
     const { name, value, type, files } = e.target;
     
     if (type === 'file') {
-      // Handle image uploads
       const fileArray = Array.from(files || []);
       setFormData(prev => ({
         ...prev,
         images: fileArray
       }));
 
-      // Create previews
       const previews = [];
       fileArray.forEach(file => {
         if (file.type.startsWith('image/')) {
@@ -243,7 +233,7 @@ export default function MyJournal() {
     }
   };
 
-  // Handle CustomDropdown change
+  // Handle dropdown change
   const handleDropdownChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -268,7 +258,7 @@ export default function MyJournal() {
     }));
   };
 
-  // Submit Form - Proper FormData handling
+  // Submit Form
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -277,37 +267,35 @@ export default function MyJournal() {
 
     try {
       // Validation
-      if (!formData.symbol || !formData.entry_price || !formData.exit_price || 
-          !formData.quantity || !formData.entry_reason || !formData.exit_reason) {
-        setError('Please fill in all required fields');
+      if (!formData.symbol || !formData.entry_price || !formData.exit_price || !formData.quantity) {
+        setError('Please fill in all required fields (Symbol, Entry Price, Exit Price, Quantity)');
         setSubmitting(false);
         return;
       }
 
-      // Prepare form data using FormData
+      if (!formData.entry_date || !formData.exit_date) {
+        setError('Please fill in both Entry and Exit dates');
+        setSubmitting(false);
+        return;
+      }
+
+      // Prepare form data
       const form = new FormData();
       
       form.append('symbol', formData.symbol.toUpperCase());
       form.append('entry_price', parseFloat(formData.entry_price));
       form.append('exit_price', parseFloat(formData.exit_price));
       form.append('quantity', parseInt(formData.quantity));
-      form.append('trade_type', formData.trade_type || 'Long');
       
-      // Handle dates in ISO format
-      const entryDate = formData.entry_date 
-        ? new Date(formData.entry_date).toISOString() 
-        : new Date().toISOString();
-      const exitDate = formData.exit_date 
-        ? new Date(formData.exit_date).toISOString() 
-        : new Date().toISOString();
+      const entryDateObj = new Date(formData.entry_date);
+      const exitDateObj = new Date(formData.exit_date);
       
-      form.append('entry_date', entryDate);
-      form.append('exit_date', exitDate);
+      form.append('entry_date', entryDateObj.toISOString());
+      form.append('exit_date', exitDateObj.toISOString());
       
-      // Handle strategy - use name if id not available
+      // Handle strategy
       if (formData.strategy_id) {
         form.append('strategy_id', parseInt(formData.strategy_id));
-        // Find strategy name from id
         const selectedStrategy = strategies.find(s => s.id === parseInt(formData.strategy_id));
         if (selectedStrategy) {
           form.append('trading_strategy', selectedStrategy.name);
@@ -316,17 +304,15 @@ export default function MyJournal() {
         form.append('trading_strategy', formData.trading_strategy);
       }
       
-      // Combine entry and exit reasons into trade_notes
-      const combinedNotes = `${formData.entry_reason} | ${formData.exit_reason}`;
-      form.append('trade_notes', combinedNotes);
-      
-      if (formData.emotions) form.append('emotions', formData.emotions);
-      if (formData.lessons_learned) form.append('lessons_learned', formData.lessons_learned);
-      if (formData.tags) form.append('tags', formData.tags);
+      if (formData.trade_notes) {
+        form.append('trade_notes', formData.trade_notes);
+      }
 
-      // Add images to FormData
       console.log('📤 Submitting FormData with:');
       console.log('   - Symbol:', formData.symbol);
+      console.log('   - Entry Price:', formData.entry_price);
+      console.log('   - Exit Price:', formData.exit_price);
+      console.log('   - Quantity:', formData.quantity);
       console.log('   - Images:', formData.images.length);
       
       formData.images.forEach(file => {
@@ -341,8 +327,6 @@ export default function MyJournal() {
         method = 'PUT';
       }
 
-      console.log(`📍 Endpoint: ${endpoint}, Method: ${method}`);
-
       const result = await apiCall(endpoint, {
         method,
         body: form
@@ -353,23 +337,16 @@ export default function MyJournal() {
         setSuccess(message);
         showToast(message, 'success');
         
-        // Reset form
         setFormData({
           symbol: "",
           entry_price: "",
           exit_price: "",
           quantity: "",
-          trade_type: "Long",
-          strategy_id: "",
-          trading_strategy: "",
-          entry_reason: "",
-          exit_reason: "",
-          emotions: "",
-          lessons_learned: "",
-          tags: "",
-          trade_notes: "",
           entry_date: "",
           exit_date: "",
+          strategy_id: "",
+          trading_strategy: "",
+          trade_notes: "",
           images: []
         });
         
@@ -378,7 +355,6 @@ export default function MyJournal() {
         setEditingTrade(null);
         setShowForm(false);
         
-        // Reload trades
         loadTrades();
       }
     } catch (err) {
@@ -391,7 +367,8 @@ export default function MyJournal() {
   };
 
   // Close form
-  const handleCloseForm = () => {
+  const handleCloseForm = (e) => {
+    if (e) e.preventDefault();
     setShowForm(false);
     setEditingTrade(null);
     setError('');
@@ -402,32 +379,19 @@ export default function MyJournal() {
       entry_price: "",
       exit_price: "",
       quantity: "",
-      trade_type: "Long",
-      strategy_id: "",
-      trading_strategy: "",
-      entry_reason: "",
-      exit_reason: "",
-      emotions: "",
-      lessons_learned: "",
-      tags: "",
-      trade_notes: "",
       entry_date: "",
       exit_date: "",
+      strategy_id: "",
+      trading_strategy: "",
+      trade_notes: "",
       images: []
     });
   };
 
-  // Edit trade with proper date handling
+  // Edit trade
   const handleEditTrade = (trade) => {
     setEditingTrade(trade);
     
-    // Parse trade notes
-    const notes = trade.trade_notes || '';
-    const [entryReason, exitReason] = notes.split(' | ').length === 2 
-      ? notes.split(' | ') 
-      : [notes, ''];
-    
-    // Format dates for input
     const formatDateForInput = (dateStr) => {
       if (!dateStr) return '';
       try {
@@ -443,14 +407,8 @@ export default function MyJournal() {
       entry_price: trade.entry_price || '',
       exit_price: trade.exit_price || '',
       quantity: trade.quantity || '',
-      trade_type: trade.trade_type || 'Long',
       strategy_id: trade.strategy_id || '',
       trading_strategy: trade.trading_strategy || '',
-      entry_reason: entryReason.trim() || '',
-      exit_reason: exitReason.trim() || '',
-      emotions: trade.emotions || '',
-      lessons_learned: trade.lessons_learned || '',
-      tags: trade.tags || '',
       trade_notes: trade.trade_notes || '',
       entry_date: formatDateForInput(trade.entry_date),
       exit_date: formatDateForInput(trade.exit_date),
@@ -477,7 +435,7 @@ export default function MyJournal() {
     }
   };
 
-  // View trade details
+  // View trade
   const handleViewTrade = (trade) => {
     setSelectedTrade(trade);
     setShowDetail(true);
@@ -627,10 +585,10 @@ export default function MyJournal() {
                         />
                       </TableCell>
                       <TableCell sx={{ padding: '16px' }}>
-                        {trade.image_urls && trade.image_urls.length > 0 ? (
+                        {trade.images && trade.images.length > 0 ? (
                           <Chip
                             icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
-                            label={`${trade.image_urls.length}`}
+                            label={`${trade.images.length}`}
                             size="small"
                             variant="outlined"
                             sx={{ fontSize: '0.75rem' }}
@@ -709,11 +667,11 @@ export default function MyJournal() {
                   </div>
                 </div>
 
-                {trade.image_urls && trade.image_urls.length > 0 && (
+                {trade.images && trade.images.length > 0 && (
                   <div className="mb-3">
                     <Chip
                       icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
-                      label={`${trade.image_urls.length} image(s)`}
+                      label={`${trade.images.length} image(s)`}
                       size="small"
                       variant="outlined"
                       sx={{ fontSize: '0.75rem' }}
@@ -809,11 +767,12 @@ export default function MyJournal() {
 
       {/* Trade Detail Modal */}
       {showDetail && selectedTrade && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
-            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-hidden">
+          <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl h-[90vh] flex flex-col overflow-hidden my-4">
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">{selectedTrade.symbol} Trade Details</h2>
               <button
+                type="button"
                 onClick={() => setShowDetail(false)}
                 className="text-slate-600 hover:text-slate-900 transition"
               >
@@ -821,67 +780,90 @@ export default function MyJournal() {
               </button>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-slate-600">Entry Price</p>
-                  <p className="text-lg font-bold text-slate-900">₹{selectedTrade.entry_price}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600">Exit Price</p>
-                  <p className="text-lg font-bold text-slate-900">₹{selectedTrade.exit_price}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600">Quantity</p>
-                  <p className="text-lg font-bold text-slate-900">{selectedTrade.quantity}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600">P&L</p>
-                  <p className={`text-lg font-bold ${(selectedTrade.profit_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ₹{selectedTrade.profit_loss?.toFixed(2) || 0}
-                  </p>
-                </div>
-              </div>
-
-              {/* Images Section */}
-              {selectedTrade.image_urls && selectedTrade.image_urls.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 mb-3">Images ({selectedTrade.image_urls.length})</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {selectedTrade.image_urls.map((url, idx) => (
-                      <a
-                        key={idx}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative group"
-                      >
-                        <img
-                          src={url}
-                          alt={`Trade image ${idx + 1}`}
-                          className="w-full h-40 object-cover rounded-lg border border-slate-200 group-hover:opacity-80 transition"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
-                          <span className="text-white text-sm font-medium">Open</span>
-                        </div>
-                      </a>
-                    ))}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-600">Entry Price</p>
+                    <p className="text-lg font-bold text-slate-900">₹{selectedTrade.entry_price}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">Exit Price</p>
+                    <p className="text-lg font-bold text-slate-900">₹{selectedTrade.exit_price}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">Quantity</p>
+                    <p className="text-lg font-bold text-slate-900">{selectedTrade.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">P&L</p>
+                    <p className={`text-lg font-bold ${(selectedTrade.profit_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ₹{selectedTrade.profit_loss?.toFixed(2) || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">Entry Date</p>
+                    <p className="text-lg font-bold text-slate-900">{formatDate(selectedTrade.entry_date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">Exit Date</p>
+                    <p className="text-lg font-bold text-slate-900">{formatDate(selectedTrade.exit_date)}</p>
                   </div>
                 </div>
-              )}
 
-              <div>
-                <p className="text-sm font-semibold text-slate-900 mb-2">Notes</p>
-                <p className="text-slate-600 text-sm">{selectedTrade.trade_notes || 'No notes'}</p>
-              </div>
+                {selectedTrade.trading_strategy && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 mb-2">Strategy</p>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-slate-700">{selectedTrade.trading_strategy}</p>
+                    </div>
+                  </div>
+                )}
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setShowDetail(false)}
-                  className="w-full px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition"
-                >
-                  Close
-                </button>
+                {selectedTrade.images && selectedTrade.images.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 mb-3">Images ({selectedTrade.images.length})</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedTrade.images.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative group"
+                        >
+                          <img
+                            src={url}
+                            alt={`Trade image ${idx + 1}`}
+                            className="w-full h-40 object-cover rounded-lg border border-slate-200 group-hover:opacity-80 transition"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
+                            <span className="text-white text-sm font-medium">Open</span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTrade.trade_notes && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 mb-2">Notes</p>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-slate-600 text-sm">{selectedTrade.trade_notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDetail(false)}
+                    className="w-full px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -890,11 +872,12 @@ export default function MyJournal() {
 
       {/* Trade Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
-            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-hidden">
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl h-[90vh] flex flex-col overflow-hidden my-4">
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">{editingTrade ? 'Edit Trade' : 'New Trade'}</h2>
               <button
+                type="button"
                 onClick={handleCloseForm}
                 className="text-slate-600 hover:text-slate-900 transition"
               >
@@ -902,236 +885,195 @@ export default function MyJournal() {
               </button>
             </div>
 
-            <div className="p-4 sm:p-6">
-              <form onSubmit={handleSubmitForm} className="space-y-4">
-                {/* Basic Trade Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
-                    <input
-                      type="text"
-                      name="symbol"
-                      value={formData.symbol}
-                      onChange={handleFormChange}
-                      placeholder="INFY"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="entry_price"
-                      value={formData.entry_price}
-                      onChange={handleFormChange}
-                      placeholder="1500.00"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Price *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="exit_price"
-                      value={formData.exit_price}
-                      onChange={handleFormChange}
-                      placeholder="1550.00"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={formData.quantity}
-                      onChange={handleFormChange}
-                      placeholder="10"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Strategy Dropdown using CustomDropdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <CustomDropdown
-                    name="strategy_id"
-                    label="Strategy"
-                    placeholder="Select strategy..."
-                    value={formData.strategy_id}
-                    onChange={handleDropdownChange}
-                    options={strategies.map(s => ({ value: s.id, label: s.name }))}
-                    searchable={true}
-                  />
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date</label>
-                    <input
-                      type="date"
-                      name="entry_date"
-                      value={formData.entry_date}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date</label>
-                    <input
-                      type="date"
-                      name="exit_date"
-                      value={formData.exit_date}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Reasons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Reason *</label>
-                    <textarea
-                      name="entry_reason"
-                      value={formData.entry_reason}
-                      onChange={handleFormChange}
-                      placeholder="Why did you enter this trade?"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
-                      rows="3"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Reason *</label>
-                    <textarea
-                      name="exit_reason"
-                      value={formData.exit_reason}
-                      onChange={handleFormChange}
-                      placeholder="Why did you exit this trade?"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
-                      rows="3"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Additional Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Emotions</label>
-                    <input
-                      type="text"
-                      name="emotions"
-                      value={formData.emotions}
-                      onChange={handleFormChange}
-                      placeholder="Confident, Fearful, Greedy..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Lessons Learned</label>
-                    <input
-                      type="text"
-                      name="lessons_learned"
-                      value={formData.lessons_learned}
-                      onChange={handleFormChange}
-                      placeholder="What did you learn?"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-black mb-2">
-                    Upload Images
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
-                    <input
-                      type="file"
-                      name="images"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFormChange}
-                      className="hidden"
-                      id="trade-image-upload"
-                    />
-                    <label htmlFor="trade-image-upload" className="cursor-pointer block">
-                      <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
-                    </label>
-                    {formData.images.length > 0 && (
-                      <div className="mt-4 text-sm text-green-600 font-medium">
-                        ✓ {formData.images.length} image(s) selected
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Image Previews */}
-                  {imagePreviews.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {imagePreviews.map((preview, idx) => (
-                          <div key={idx} className="relative group">
-                            <img
-                              src={preview.preview}
-                              alt={`Preview ${idx + 1}`}
-                              className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImagePreview(idx)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
-                            >
-                              ×
-                            </button>
-                            <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
-                          </div>
-                        ))}
-                      </div>
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleSubmitForm} className="space-y-4">
+                  {/* Basic Trade Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
+                      <input
+                        type="text"
+                        name="symbol"
+                        value={formData.symbol}
+                        onChange={handleFormChange}
+                        placeholder="WIPRO"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
                     </div>
-                  )}
-                </div>
 
-                {/* Submit Button */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
-                  <button
-                    type="button"
-                    onClick={handleCloseForm}
-                    disabled={submitting}
-                    className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Saving...
-                      </>
-                    ) : (
-                      editingTrade ? 'Update Trade' : 'Create Trade'
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="entry_price"
+                        value={formData.entry_price}
+                        onChange={handleFormChange}
+                        placeholder="1500.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="exit_price"
+                        value={formData.exit_price}
+                        onChange={handleFormChange}
+                        placeholder="1550.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
+                      <input
+                        type="number"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleFormChange}
+                        placeholder="10"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Strategy & Dates */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <CustomDropdown
+                      name="strategy_id"
+                      label="Strategy"
+                      placeholder="Select strategy..."
+                      value={formData.strategy_id}
+                      onChange={handleDropdownChange}
+                      options={strategies.map(s => ({ value: s.id, label: s.name }))}
+                      searchable={true}
+                    />
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date *</label>
+                      <input
+                        type="date"
+                        name="entry_date"
+                        value={formData.entry_date}
+                        onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date *</label>
+                      <input
+                        type="date"
+                        name="exit_date"
+                        value={formData.exit_date}
+                        onChange={handleFormChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Trade Notes */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Notes</label>
+                    <textarea
+                      name="trade_notes"
+                      value={formData.trade_notes}
+                      onChange={handleFormChange}
+                      placeholder="Any notes about this trade..."
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
+                      rows="3"
+                    />
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
+                      <input
+                        type="file"
+                        name="images"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFormChange}
+                        className="hidden"
+                        id="trade-image-upload"
+                      />
+                      <label htmlFor="trade-image-upload" className="cursor-pointer block">
+                        <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
+                      </label>
+                      {formData.images.length > 0 && (
+                        <div className="mt-4 text-sm text-green-600 font-medium">
+                          ✓ {formData.images.length} image(s) selected
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Image Previews */}
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {imagePreviews.map((preview, idx) => (
+                            <div key={idx} className="relative group">
+                              <img
+                                src={preview.preview}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImagePreview(idx)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
+                              >
+                                ×
+                              </button>
+                              <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </button>
-                </div>
-              </form>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleCloseForm}
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        editingTrade ? 'Update Trade' : 'Create Trade'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
