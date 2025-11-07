@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import CustomDropdown from "@/components/CustomDropdown";
 import {
   Table,
   TableBody,
@@ -52,6 +53,7 @@ export default function MyJournal() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Trade Form Data
   const [formData, setFormData] = useState({
     symbol: "",
     entry_price: "",
@@ -71,6 +73,7 @@ export default function MyJournal() {
     images: []
   });
 
+  // Toast notification
   const showToast = useCallback((message, type = "error") => {
     toastRef.current += 1;
     const id = Date.now() + toastRef.current;
@@ -88,7 +91,7 @@ export default function MyJournal() {
     return null;
   };
 
-  // FIXED: API call wrapper with proper FormData + JSON handling
+  // API call wrapper with proper FormData + JSON handling
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
@@ -211,7 +214,7 @@ export default function MyJournal() {
     return () => clearTimeout(delayedSearch);
   }, [searchTerm, searchQuery]);
 
-  // Form handlers - UPDATED with image preview support
+  // Form handlers with image preview support
   const handleFormChange = (e) => {
     const { name, value, type, files } = e.target;
     
@@ -240,6 +243,15 @@ export default function MyJournal() {
     }
   };
 
+  // Handle CustomDropdown change
+  const handleDropdownChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   // Remove image preview
   const removeImagePreview = (index) => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
@@ -256,7 +268,7 @@ export default function MyJournal() {
     }));
   };
 
-  // FIXED: Submit Form - Proper FormData handling for both CREATE and UPDATE
+  // Submit Form - Proper FormData handling
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -281,7 +293,7 @@ export default function MyJournal() {
       form.append('quantity', parseInt(formData.quantity));
       form.append('trade_type', formData.trade_type || 'Long');
       
-      // FIXED: Always use ISO format for dates
+      // Handle dates in ISO format
       const entryDate = formData.entry_date 
         ? new Date(formData.entry_date).toISOString() 
         : new Date().toISOString();
@@ -292,7 +304,7 @@ export default function MyJournal() {
       form.append('entry_date', entryDate);
       form.append('exit_date', exitDate);
       
-      // FIXED: Handle strategy - use name if id not available
+      // Handle strategy - use name if id not available
       if (formData.strategy_id) {
         form.append('strategy_id', parseInt(formData.strategy_id));
         // Find strategy name from id
@@ -405,7 +417,7 @@ export default function MyJournal() {
     });
   };
 
-  // FIXED: Edit trade with proper date handling
+  // Edit trade with proper date handling
   const handleEditTrade = (trade) => {
     setEditingTrade(trade);
     
@@ -442,7 +454,7 @@ export default function MyJournal() {
       trade_notes: trade.trade_notes || '',
       entry_date: formatDateForInput(trade.entry_date),
       exit_date: formatDateForInput(trade.exit_date),
-      images: [] // Don't pre-fill images for updates
+      images: []
     });
     setImagePreviews([]);
     setShowForm(true);
@@ -797,9 +809,9 @@ export default function MyJournal() {
 
       {/* Trade Detail Modal */}
       {showDetail && selectedTrade && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
               <h2 className="text-lg font-bold text-slate-900">{selectedTrade.symbol} Trade Details</h2>
               <button
                 onClick={() => setShowDetail(false)}
@@ -809,7 +821,7 @@ export default function MyJournal() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-600">Entry Price</p>
@@ -831,7 +843,7 @@ export default function MyJournal() {
                 </div>
               </div>
 
-              {/* UPDATED: Images Section */}
+              {/* Images Section */}
               {selectedTrade.image_urls && selectedTrade.image_urls.length > 0 && (
                 <div>
                   <p className="text-sm font-semibold text-slate-900 mb-3">Images ({selectedTrade.image_urls.length})</p>
@@ -876,7 +888,7 @@ export default function MyJournal() {
         </div>
       )}
 
-      {/* Trade Form Modal - UPDATED WITH IMAGE UPLOAD */}
+      {/* Trade Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
@@ -949,33 +961,19 @@ export default function MyJournal() {
                   </div>
                 </div>
 
-                {/* Strategy & Dates - FIXED: Responsive dropdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">Strategy</label>
-                    <select
-                      name="strategy_id"
-                      value={formData.strategy_id}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white appearance-none cursor-pointer"
-                      style={{
-                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 0.5rem center',
-                        backgroundSize: '1.5em 1.5em',
-                        paddingRight: '2.5rem'
-                      }}
-                    >
-                      <option value="">Select strategy...</option>
-                      {strategies.map(strategy => (
-                        <option key={strategy.id} value={strategy.id}>
-                          {strategy.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                {/* Strategy Dropdown using CustomDropdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <CustomDropdown
+                    name="strategy_id"
+                    label="Strategy"
+                    placeholder="Select strategy..."
+                    value={formData.strategy_id}
+                    onChange={handleDropdownChange}
+                    options={strategies.map(s => ({ value: s.id, label: s.name }))}
+                    searchable={true}
+                  />
 
-                  <div className="sm:col-span-1">
+                  <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date</label>
                     <input
                       type="date"
@@ -986,7 +984,7 @@ export default function MyJournal() {
                     />
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date</label>
                     <input
                       type="date"
@@ -1054,7 +1052,7 @@ export default function MyJournal() {
                   </div>
                 </div>
 
-                {/* Image Upload - UPDATED WITH PREVIEWS */}
+                {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">
                     Upload Images
