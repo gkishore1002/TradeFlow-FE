@@ -1,4 +1,3 @@
-// app/dashboard/MyJournal.jsx
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -23,6 +22,7 @@ import {
   ChevronRight as ChevronRightIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
+import DeleteModal from "@/components/DeleteModal";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
@@ -67,6 +67,11 @@ export default function MyJournal() {
     images: []
   });
 
+  // Delete modal state
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [tradeToDelete, setTradeToDelete] = useState(null);
+
   // Toast notification
   const showToast = useCallback((message, type = "error") => {
     toastRef.current += 1;
@@ -102,8 +107,6 @@ export default function MyJournal() {
         ...(options.headers || {})
       };
 
-      console.log(`🔄 API Call: ${endpoint}`);
-      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers
@@ -117,16 +120,13 @@ export default function MyJournal() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', data);
         throw new Error(data.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
       setBackendConnected(true);
-      console.log('✅ API Success:', data);
       return data;
     } catch (error) {
-      console.error('API Error:', error);
       setBackendConnected(false);
       throw error;
     }
@@ -161,7 +161,6 @@ export default function MyJournal() {
       }
       setError('');
     } catch (err) {
-      console.error('Error loading trades:', err);
       setError(`Failed to load trades: ${err.message}`);
       showToast(`Failed to load trades: ${err.message}`, 'error');
       setTrades([]);
@@ -177,8 +176,8 @@ export default function MyJournal() {
       if (data && data.items) {
         setStrategies(data.items);
       }
-    } catch (err) {
-      console.error('Error loading strategies:', err);
+    } catch {
+      // non-blocking
     }
   }, [apiCall]);
 
@@ -308,13 +307,6 @@ export default function MyJournal() {
         form.append('trade_notes', formData.trade_notes);
       }
 
-      console.log('📤 Submitting FormData with:');
-      console.log('   - Symbol:', formData.symbol);
-      console.log('   - Entry Price:', formData.entry_price);
-      console.log('   - Exit Price:', formData.exit_price);
-      console.log('   - Quantity:', formData.quantity);
-      console.log('   - Images:', formData.images.length);
-      
       formData.images.forEach(file => {
         form.append('images', file);
       });
@@ -358,7 +350,6 @@ export default function MyJournal() {
         loadTrades();
       }
     } catch (err) {
-      console.error('Error submitting form:', err);
       setError(`Failed to submit form: ${err.message}`);
       showToast(`Failed to submit form: ${err.message}`, 'error');
     } finally {
@@ -418,21 +409,34 @@ export default function MyJournal() {
     setShowForm(true);
   };
 
-  // Delete trade
-  const handleDeleteTrade = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this trade?')) return;
+  // Delete flow with reusable modal
+  const requestDeleteTrade = (trade) => {
+    setTradeToDelete(trade);
+    setDeleteOpen(true);
+  };
 
+  const confirmDeleteTrade = async () => {
+    if (!tradeToDelete) return;
     try {
-      await apiCall(`/api/trade-logs/${id}`, { method: 'DELETE' });
+      setDeleting(true);
+      await apiCall(`/api/trade-logs/${tradeToDelete.id}`, { method: 'DELETE' });
       setSuccess('✅ Trade deleted successfully!');
       showToast('Trade deleted successfully!', 'success');
-      loadTrades();
+      await loadTrades();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error('Error deleting trade:', err);
       setError(`Failed to delete trade: ${err.message}`);
       showToast(`Failed to delete trade: ${err.message}`, 'error');
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setTradeToDelete(null);
     }
+  };
+
+  const cancelDeleteTrade = () => {
+    setDeleteOpen(false);
+    setTradeToDelete(null);
   };
 
   // View trade
@@ -447,7 +451,7 @@ export default function MyJournal() {
   };
 
   // Toast Container
-  const ToastContainer = () => (
+  const Toasts = () => (
     <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
       {toasts.map(toast => (
         <div
@@ -466,7 +470,7 @@ export default function MyJournal() {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-      <ToastContainer />
+      <Toasts />
 
       {/* Header Section */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
@@ -540,7 +544,7 @@ export default function MyJournal() {
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Loading / Empty / Table */}
       {loading ? (
         <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
@@ -620,7 +624,7 @@ export default function MyJournal() {
                           <Tooltip title="Delete">
                             <IconButton
                               size="small"
-                              onClick={() => handleDeleteTrade(trade.id)}
+                              onClick={() => requestDeleteTrade(trade)}
                               sx={{ color: '#dc2626' }}
                             >
                               <DeleteIcon sx={{ fontSize: '1rem' }} />
@@ -701,7 +705,7 @@ export default function MyJournal() {
                   <Tooltip title="Delete">
                     <IconButton
                       size="small"
-                      onClick={() => handleDeleteTrade(trade.id)}
+                      onClick={() => requestDeleteTrade(trade)}
                       sx={{ flex: 1, color: '#dc2626' }}
                     >
                       <DeleteIcon sx={{ fontSize: '1rem' }} />
@@ -1078,6 +1082,22 @@ export default function MyJournal() {
           </div>
         </div>
       )}
+
+      {/* Reusable Delete Modal */}
+      <DeleteModal
+        open={deleteOpen}
+        title="Delete Trade"
+        message={
+          tradeToDelete
+            ? `Are you sure you want to delete trade "${tradeToDelete.symbol}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this trade? This action cannot be undone.'
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleting}
+        onConfirm={confirmDeleteTrade}
+        onCancel={cancelDeleteTrade}
+      />
 
       <style jsx>{`
         @keyframes fade-in {

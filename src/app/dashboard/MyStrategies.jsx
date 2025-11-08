@@ -1,9 +1,9 @@
-// app/dashboard/MyStrategies.jsx
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import CustomDropdown from "@/components/CustomDropdown";
-import { Plus, X, Trash2, Eye, Edit2, Calendar, Tag, AlertTriangle, ChevronLeft, ChevronRight, Search, Image as ImageIcon } from "lucide-react";
+import { Plus, X, Trash2, Eye, Edit2, Calendar, Tag, ChevronLeft, ChevronRight, Search, Image as ImageIcon } from "lucide-react";
+import DeleteModal from "@/components/DeleteModal";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
@@ -27,8 +27,12 @@ export default function MyStrategies() {
   const [editingStrategy, setEditingStrategy] = useState(null);
   const [selectedStrategy, setSelectedStrategy] = useState(null);
   const [showStrategyModal, setShowStrategyModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Reusable delete modal state
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [strategyToDelete, setStrategyToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [backendConnected, setBackendConnected] = useState(false);
@@ -47,7 +51,6 @@ export default function MyStrategies() {
     images: []
   });
 
-  // Category options for dropdown
   const categoryOptions = [
     { value: "Momentum Trading", label: "Momentum Trading" },
     { value: "Swing Trading", label: "Swing Trading" },
@@ -56,14 +59,12 @@ export default function MyStrategies() {
     { value: "Breakout", label: "Breakout" }
   ];
 
-  // Risk level options for dropdown
   const riskLevelOptions = [
     { value: "Low Risk", label: "Low Risk" },
     { value: "Medium Risk", label: "Medium Risk" },
     { value: "High Risk", label: "High Risk" }
   ];
 
-  // Timeframe options for dropdown
   const timeframeOptions = [
     { value: "Intraday (1 day)", label: "Intraday (1 day)" },
     { value: "Swing (days-weeks)", label: "Swing (days-weeks)" },
@@ -71,7 +72,6 @@ export default function MyStrategies() {
     { value: "Long Term (months-years)", label: "Long Term (months-years)" }
   ];
 
-  // Show toast notification
   const showToast = useCallback((message, type = "error") => {
     toastRef.current += 1;
     const id = Date.now() + toastRef.current;
@@ -81,7 +81,6 @@ export default function MyStrategies() {
     }, 5000);
   }, []);
 
-  // Get JWT Token
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('access_token');
@@ -89,7 +88,6 @@ export default function MyStrategies() {
     return null;
   };
 
-  // API Call with proper FormData + JSON handling
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
@@ -99,19 +97,14 @@ export default function MyStrategies() {
         return null;
       }
 
-      // Properly detect FormData
       const isFormData = options.body instanceof FormData;
       
-      // Build headers - ONLY add Content-Type for non-FormData
       const headers = {
         'Authorization': `Bearer ${token}`,
         ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...options.headers
       };
 
-      console.log(`🔄 API Call: ${endpoint}`);
-      console.log(`📦 Is FormData: ${isFormData}`);
-      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers
@@ -125,22 +118,18 @@ export default function MyStrategies() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
       setBackendConnected(true);
-      console.log('✅ API Success:', data);
       return data;
     } catch (error) {
-      console.error('API Error:', error);
       setBackendConnected(false);
       throw error;
     }
   }, [router]);
 
-  // Fetch strategies from backend with pagination
   const fetchStrategies = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
@@ -159,7 +148,6 @@ export default function MyStrategies() {
 
       const data = await apiCall(`/api/strategies?${params.toString()}`);
 
-      // Handle paginated response
       if (data && typeof data === 'object') {
         if (data.items && Array.isArray(data.items)) {
           setStrategies(data.items);
@@ -177,14 +165,12 @@ export default function MyStrategies() {
             has_next: false
           });
         } else {
-          console.warn('Unexpected API response format:', data);
           setStrategies([]);
         }
       } else {
         setStrategies([]);
       }
     } catch (err) {
-      console.error("Error fetching strategies:", err);
       setError(`Failed to load strategies: ${err.message}`);
       showToast(`Failed to load strategies: ${err.message}`, 'error');
       setStrategies([]);
@@ -193,7 +179,6 @@ export default function MyStrategies() {
     }
   }, [apiCall, showToast]);
 
-  // Initial load
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {
@@ -204,7 +189,6 @@ export default function MyStrategies() {
     fetchStrategies(1, "");
   }, [fetchStrategies, router]);
 
-  // Debounced search
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       if (searchTerm !== searchQuery) {
@@ -216,32 +200,30 @@ export default function MyStrategies() {
     return () => clearTimeout(delayedSearch);
   }, [searchTerm, searchQuery, fetchStrategies]);
 
-  // Handle pagination
+  // Pagination
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.pages) {
       fetchStrategies(newPage, searchQuery);
     }
   };
 
-  // Handle search
+  // Search
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
   };
 
-  // Handle input change with file support
+  // Input/file
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     
     if (type === 'file') {
-      // Handle image uploads
       const fileArray = Array.from(files || []);
       setFormData(prev => ({
         ...prev,
         images: fileArray
       }));
 
-      // Create previews
       const previews = [];
       fileArray.forEach(file => {
         if (file.type.startsWith('image/')) {
@@ -255,13 +237,13 @@ export default function MyStrategies() {
     }
   };
 
-  // Handle CustomDropdown change
+  // Dropdown
   const handleDropdownChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Remove image preview
+  // Remove preview
   const removeImagePreview = (index) => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     const newImages = formData.images.filter((_, i) => i !== index);
@@ -277,7 +259,7 @@ export default function MyStrategies() {
     }));
   };
 
-  // Handle submit with FormData
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -290,7 +272,6 @@ export default function MyStrategies() {
       setSubmitting(true);
       setError("");
 
-      // Always use FormData for consistency
       const form = new FormData();
       form.append('name', formData.name);
       form.append('category', formData.category);
@@ -301,18 +282,11 @@ export default function MyStrategies() {
       if (formData.trading_rules) form.append('trading_rules', formData.trading_rules);
       if (formData.additional_notes) form.append('additional_notes', formData.additional_notes);
       
-      // Append images
       formData.images.forEach(file => {
         form.append('images', file);
       });
 
-      console.log('📤 Submitting FormData with:');
-      console.log('   - Name:', formData.name);
-      console.log('   - Category:', formData.category);
-      console.log('   - Images:', formData.images.length);
-
       if (editingStrategy) {
-        // Update existing strategy
         await apiCall(`/api/strategies/${editingStrategy.id}`, {
           method: "PUT",
           body: form
@@ -320,7 +294,6 @@ export default function MyStrategies() {
         setSuccess('✅ Strategy updated successfully!');
         showToast('Strategy updated successfully!', 'success');
       } else {
-        // Create new strategy
         await apiCall('/api/strategies', {
           method: "POST",
           body: form
@@ -329,7 +302,6 @@ export default function MyStrategies() {
         showToast('Strategy created successfully!', 'success');
       }
 
-      // Reset form
       setShowForm(false);
       setEditingStrategy(null);
       setFormData({
@@ -344,11 +316,9 @@ export default function MyStrategies() {
       });
       setImagePreviews([]);
 
-      // Refresh list
       await fetchStrategies(pagination.page, searchQuery);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error("Error saving strategy:", err);
       setError(`Failed to save strategy: ${err.message}`);
       showToast(`Failed to save strategy: ${err.message}`, 'error');
     } finally {
@@ -396,36 +366,36 @@ export default function MyStrategies() {
     setShowStrategyModal(true);
   };
 
+  // Delete flow with reusable modal
   const handleDeleteClick = (strategy) => {
     setStrategyToDelete(strategy);
-    setShowDeleteModal(true);
+    setDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
     if (!strategyToDelete) return;
 
     try {
-      setError("");
+      setDeleting(true);
       await apiCall(`/api/strategies/${strategyToDelete.id}`, {
         method: "DELETE"
       });
       setSuccess('✅ Strategy deleted successfully!');
       showToast('Strategy deleted successfully!', 'success');
       await fetchStrategies(pagination.page, searchQuery);
-      setShowDeleteModal(false);
-      setStrategyToDelete(null);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error("Error deleting strategy:", err);
       setError(`Failed to delete strategy: ${err.message}`);
       showToast(`Failed to delete strategy: ${err.message}`, 'error');
-      setShowDeleteModal(false);
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
       setStrategyToDelete(null);
     }
   };
 
   const cancelDelete = () => {
-    setShowDeleteModal(false);
+    setDeleteOpen(false);
     setStrategyToDelete(null);
   };
 
@@ -451,8 +421,7 @@ export default function MyStrategies() {
     }
   };
 
-  // Toast Container
-  const ToastContainer = () => (
+  const Toasts = () => (
     <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
       {toasts.map(toast => (
         <div
@@ -472,7 +441,7 @@ export default function MyStrategies() {
   if (loading && strategies.length === 0) {
     return (
       <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-        <ToastContainer />
+        <Toasts />
         <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg border border-white/20">
           <div className="animate-pulse">
             <div className="h-6 sm:h-8 bg-slate-200 rounded w-1/2 sm:w-1/3 mb-3 sm:mb-4"></div>
@@ -485,7 +454,7 @@ export default function MyStrategies() {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-      <ToastContainer />
+      <Toasts />
 
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
@@ -564,11 +533,11 @@ export default function MyStrategies() {
         </div>
       )}
 
-      {/* Form Modal - FIXED HEADER, SCROLLABLE CONTENT */}
+      {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-hidden">
           <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl h-[90vh] flex flex-col overflow-hidden my-4">
-            {/* FIXED HEADER */}
+            {/* Header */}
             <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">{editingStrategy ? 'Edit Strategy' : 'New Strategy'}</h2>
               <button
@@ -580,7 +549,7 @@ export default function MyStrategies() {
               </button>
             </div>
 
-            {/* SCROLLABLE CONTENT */}
+            {/* Content */}
             <div className="flex-1 overflow-y-auto">
               <div className="p-4 sm:p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -598,7 +567,7 @@ export default function MyStrategies() {
                     />
                   </div>
 
-                  {/* Category, Risk Level, Timeframe with CustomDropdown */}
+                  {/* Category, Risk Level, Timeframe */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <CustomDropdown
                       name="category"
@@ -727,7 +696,7 @@ export default function MyStrategies() {
                     )}
                   </div>
 
-                  {/* Form Buttons - STICKY AT BOTTOM */}
+                  {/* Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200 mt-6">
                     <button
                       type="button"
@@ -899,7 +868,7 @@ export default function MyStrategies() {
                         type="button"
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={!pagination.has_prev}
-                        className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md sm:rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 bg白 border border-gray-300 rounded-md sm:rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Previous</span>
@@ -951,47 +920,6 @@ export default function MyStrategies() {
             </>
           )}
         </>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && strategyToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={cancelDelete}
-          ></div>
-
-          <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md p-4 sm:p-6 mx-4">
-            <div className="text-center">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
-              </div>
-
-              <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">Delete Strategy</h3>
-              <p className="text-sm sm:text-base text-slate-600 mb-4 sm:mb-6">
-                Are you sure you want to delete <strong>"{strategyToDelete.name}"</strong>? 
-                This action cannot be undone.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={cancelDelete}
-                  className="w-full sm:flex-1 px-4 py-2.5 sm:py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200 text-sm sm:text-base"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDelete}
-                  className="w-full sm:flex-1 px-4 py-2.5 sm:py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 text-sm sm:text-base"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Strategy View Modal */}
@@ -1102,6 +1030,22 @@ export default function MyStrategies() {
           </div>
         </div>
       )}
+
+      {/* Reusable Delete Modal */}
+      <DeleteModal
+        open={deleteOpen}
+        title="Delete Strategy"
+        message={
+          strategyToDelete
+            ? `Are you sure you want to delete "${strategyToDelete.name}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this strategy? This action cannot be undone.'
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
 
       <style jsx>{`
         .line-clamp-2 {

@@ -1,19 +1,9 @@
-// app/dashboard/PreTradeAnalysis.jsx
-"use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+'use client';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Tooltip,
+} from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -21,204 +11,264 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Image as ImageIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
+import CustomDropdown from '@/components/CustomDropdown';
+import DeleteModal from '@/components/DeleteModal';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
 export default function PreTradeAnalysis() {
   const router = useRouter();
   const toastRef = useRef(0);
-  const [analyses, setAnalyses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [strategies, setStrategies] = useState([]);
-  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [editingAnalysis, setEditingAnalysis] = useState(null);
-  const [toasts, setToasts] = useState([]);
-  const [backendConnected, setBackendConnected] = useState(false);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const mountedRef = useRef(false);
 
+  // Data
+  const [analyses, setAnalyses] = useState([]);
+  const [strategies, setStrategies] = useState([]);
+
+  // UI/system
+  const [loading, setLoading] = useState(true);
+  const [backendConnected, setBackendConnected] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  // Modals
+  const [showForm, setShowForm] = useState(false);
+  const [editingAnalysis, setEditingAnalysis] = useState(null);
+
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [analysisToDelete, setAnalysisToDelete] = useState(null);
+
+  // Form
+  const [submitting, setSubmitting] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [formData, setFormData] = useState({
+    symbol: '',
+    current_price: '',
+    entry_price: '',
+    target_price: '',
+    stop_loss: '',
+    quantity: '',
+    trade_type: 'Long',
+    strategy_id: '',
+    strategy_name: '',
+    technical_analysis: '',
+    fundamental_analysis: '',
+    confidence_level: 'Medium',
+    timeframe: 'Intraday',
+    additional_notes: '',
+    images: [],
+  });
+
+  // Pagination + search
   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [formData, setFormData] = useState({
-    symbol: "",
-    current_price: "",
-    entry_price: "",
-    target_price: "",
-    stop_loss: "",
-    quantity: "",
-    trade_type: "Long",
-    strategy_id: "",
-    strategy_name: "",
-    technical_analysis: "",
-    fundamental_analysis: "",
-    confidence_level: "Medium",
-    timeframe: "Intraday",
-    additional_notes: "",
-    images: []
-  });
+  // Options
+  const tradeTypeOptions = [
+    { value: 'Long', label: 'Long' },
+    { value: 'Short', label: 'Short' },
+  ];
+  const confidenceOptions = [
+    { value: 'High', label: 'High' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'Low', label: 'Low' },
+  ];
+  const timeframeOptions = [
+    { value: 'Intraday', label: 'Intraday' },
+    { value: 'Swing', label: 'Swing' },
+    { value: 'Position', label: 'Position' },
+    { value: 'Long Term', label: 'Long Term' },
+  ];
 
-  const showToast = useCallback((message, type = "error") => {
+  // Toast
+  const showToast = useCallback((message, type = 'error') => {
     toastRef.current += 1;
     const id = Date.now() + toastRef.current;
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(toast => toast.id !== id));
-    }, 5000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   }, []);
 
-  // Get JWT Token
   const getAuthToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
-    }
+    if (typeof window !== 'undefined') return localStorage.getItem('access_token');
     return null;
   };
 
-  // FIXED: API call wrapper with proper FormData + JSON handling
+  // API
   const apiCall = useCallback(async (endpoint, options = {}) => {
-    try {
-      const token = getAuthToken();
-      
-      if (!token) {
-        router.push('/login');
-        return null;
-      }
-
-      // Properly detect FormData
-      const isFormData = options.body instanceof FormData;
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        ...(!isFormData && { 'Content-Type': 'application/json' }),
-        ...(options.headers || {})
-      };
-
-      console.log(`🔄 API Call: ${endpoint}`);
-      
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        router.push('/login');
-        return null;
-      }
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', data);
-        throw new Error(data.error || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      setBackendConnected(true);
-      console.log('✅ API Success:', data);
-      return data;
-    } catch (error) {
-      console.error('API Error:', error);
-      setBackendConnected(false);
-      throw error;
+    const token = getAuthToken();
+    if (!token) {
+      router.push('/login');
+      return null;
     }
+    const isFormData = options.body instanceof FormData;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    };
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+    if (res.status === 401) {
+      localStorage.removeItem('access_token');
+      router.push('/login');
+      return null;
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json().catch(() => null);
+    setBackendConnected(true);
+    return data;
   }, [router]);
 
-  // Build Query Parameters
-  const buildParams = () => {
+  const buildQuery = useCallback(() => {
     const params = new URLSearchParams({
-      page: currentPage.toString(),
-      per_page: itemsPerPage.toString(),
+      page: String(currentPage),
+      per_page: String(itemsPerPage),
       sort_by: 'created_at',
       sort_order: 'desc',
-      ...(searchQuery && { search: searchQuery })
     });
-    return params;
-  };
+    if (searchQuery) params.set('search', searchQuery);
+    return params.toString();
+  }, [currentPage, itemsPerPage, searchQuery]);
 
-  // Load Analyses from Backend
   const loadAnalyses = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const params = buildParams();
-      const data = await apiCall(`/api/analyses?${params}`);
-      
-      if (data && data.items) {
+      const qs = buildQuery();
+      const data = await apiCall(`/api/analyses?${qs}`);
+      if (data?.items && Array.isArray(data.items)) {
         setAnalyses(data.items);
-        setCurrentPage(data.pagination.page);
-        setTotalPages(data.pagination.pages);
-        setTotalItems(data.pagination.total);
+        if (data.pagination) {
+          setTotalItems(data.pagination.total ?? data.items.length);
+          setTotalPages(data.pagination.pages || 1);
+        } else {
+          setTotalItems(data.items.length);
+          setTotalPages(1);
+        }
+      } else if (Array.isArray(data)) {
+        setAnalyses(data);
+        setTotalItems(data.length);
+        setTotalPages(1);
       } else {
         setAnalyses([]);
+        setTotalItems(0);
+        setTotalPages(0);
       }
       setError('');
     } catch (err) {
-      console.error('Error loading analyses:', err);
+      setAnalyses([]);
       setError(`Failed to load analyses: ${err.message}`);
       showToast(`Failed to load analyses: ${err.message}`, 'error');
-      setAnalyses([]);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery, apiCall, showToast]);
+  }, [apiCall, buildQuery, showToast]);
 
-  // Load Strategies from Backend
   const loadStrategies = useCallback(async () => {
     try {
       const data = await apiCall('/api/strategies?per_page=100');
-      if (data && data.items) {
-        setStrategies(data.items);
-      }
-    } catch (err) {
-      console.error('Error loading strategies:', err);
+      if (data?.items) setStrategies(data.items);
+      else if (Array.isArray(data)) setStrategies(data);
+    } catch {
+      // ignore
     }
   }, [apiCall]);
 
-  // Initial Load
+  // Mount once
   useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
     const token = getAuthToken();
     if (!token) {
       router.push('/login');
       return;
     }
-
     loadAnalyses();
     loadStrategies();
   }, [loadAnalyses, loadStrategies, router]);
 
-  // Debounced Search
+  // Refetch on filters change
   useEffect(() => {
-    const delayedSearch = setTimeout(() => {
-      if (searchTerm !== searchQuery) {
+    if (!mountedRef.current) return;
+    loadAnalyses();
+  }, [currentPage, searchQuery, loadAnalyses]);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (searchQuery !== searchTerm) {
         setSearchQuery(searchTerm);
         setCurrentPage(1);
       }
     }, 500);
-
-    return () => clearTimeout(delayedSearch);
+    return () => clearTimeout(t);
   }, [searchTerm, searchQuery]);
 
-  // Handle Input Change - UPDATED for file uploads
+  // Form openers
+  const openNewAnalysis = () => {
+    setEditingAnalysis(null);
+    setFormData({
+      symbol: '',
+      current_price: '',
+      entry_price: '',
+      target_price: '',
+      stop_loss: '',
+      quantity: '',
+      trade_type: 'Long',
+      strategy_id: '',
+      strategy_name: '',
+      technical_analysis: '',
+      fundamental_analysis: '',
+      confidence_level: 'Medium',
+      timeframe: 'Intraday',
+      additional_notes: '',
+      images: [],
+    });
+    setImagePreviews([]);
+    setShowForm(true);
+  };
+
+  const handleEditAnalysis = (a) => {
+    // Only set form values and open modal; do not touch header/UI state
+    setEditingAnalysis(a);
+    setFormData({
+      symbol: a.symbol || '',
+      current_price: a.current_price || '',
+      entry_price: a.entry_price || '',
+      target_price: a.target_price || '',
+      stop_loss: a.stop_loss || '',
+      quantity: a.quantity || '',
+      trade_type: a.trade_type || 'Long',
+      strategy_id: a.strategy_id || '',
+      strategy_name: a.strategy_name || '',
+      technical_analysis: a.technical_analysis || '',
+      fundamental_analysis: a.fundamental_analysis || '',
+      confidence_level: a.confidence_level || 'Medium',
+      timeframe: a.timeframe || 'Intraday',
+      additional_notes: a.additional_notes || '',
+      images: [],
+    });
+    setImagePreviews([]);
+    setShowForm(true);
+  };
+
+  // Inputs
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
-    
     if (type === 'file') {
-      // Handle image uploads
       const fileArray = Array.from(files || []);
-      setFormData(prev => ({
-        ...prev,
-        images: fileArray
-      }));
-
-      // Create previews
+      setFormData(prev => ({ ...prev, images: fileArray }));
       const previews = [];
       fileArray.forEach(file => {
         if (file.type.startsWith('image/')) {
@@ -228,46 +278,66 @@ export default function PreTradeAnalysis() {
       });
       setImagePreviews(previews);
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Remove image preview
-  const removeImagePreview = (index) => {
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    const newImages = formData.images.filter((_, i) => i !== index);
-    
-    if (imagePreviews[index]) {
-      URL.revokeObjectURL(imagePreviews[index].preview);
-    }
-    
+  const handleDropdownChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const removeImagePreview = (i) => {
+    const newPreviews = imagePreviews.filter((_, idx) => idx !== i);
+    const newImages = formData.images.filter((_, idx) => idx !== i);
+    if (imagePreviews[i]) URL.revokeObjectURL(imagePreviews[i].preview);
     setImagePreviews(newPreviews);
-    setFormData(prev => ({
-      ...prev,
-      images: newImages
-    }));
+    setFormData(prev => ({ ...prev, images: newImages }));
   };
 
-  // Handle Submit - UPDATED to use FormData
+  const resetForm = () => {
+    imagePreviews.forEach(p => URL.revokeObjectURL(p.preview));
+    setImagePreviews([]);
+    setFormData({
+      symbol: '',
+      current_price: '',
+      entry_price: '',
+      target_price: '',
+      stop_loss: '',
+      quantity: '',
+      trade_type: 'Long',
+      strategy_id: '',
+      strategy_name: '',
+      technical_analysis: '',
+      fundamental_analysis: '',
+      confidence_level: 'Medium',
+      timeframe: 'Intraday',
+      additional_notes: '',
+      images: [],
+    });
+    setEditingAnalysis(null);
+  };
+
+  const handleCancel = () => {
+    // Close modal only; do not touch header state
+    setShowForm(false);
+    setError('');
+    resetForm();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.symbol || !formData.current_price || !formData.entry_price || 
-        !formData.target_price || !formData.stop_loss || !formData.quantity || 
+    if (!formData.symbol || !formData.current_price || !formData.entry_price ||
+        !formData.target_price || !formData.stop_loss || !formData.quantity ||
         !formData.technical_analysis) {
       setError('Please fill in all required fields');
       return;
     }
-
-    setSubmitting(true);
-    setError('');
-    setSuccess('');
-
     try {
-      // UPDATED: Use FormData for image uploads
+      setSubmitting(true);
+      setError('');
+      setSuccess('');
+
       const form = new FormData();
       form.append('symbol', formData.symbol.toUpperCase());
       form.append('current_price', parseFloat(formData.current_price));
@@ -279,66 +349,24 @@ export default function PreTradeAnalysis() {
       form.append('confidence_level', formData.confidence_level);
       form.append('timeframe', formData.timeframe);
       form.append('technical_analysis', formData.technical_analysis);
-      
       if (formData.fundamental_analysis) form.append('fundamental_analysis', formData.fundamental_analysis);
       if (formData.additional_notes) form.append('additional_notes', formData.additional_notes);
       if (formData.strategy_id) form.append('strategy_id', parseInt(formData.strategy_id));
       if (formData.strategy_name) form.append('strategy_name', formData.strategy_name);
-      
-      // ADDED: Append images
-      console.log('📤 Submitting FormData with:');
-      console.log('   - Symbol:', formData.symbol);
-      console.log('   - Images:', formData.images.length);
-      
-      formData.images.forEach(file => {
-        form.append('images', file);
-      });
+      formData.images.forEach(file => form.append('images', file));
 
-      let endpoint = '/api/analyses';
-      let method = 'POST';
-
-      if (editingAnalysis) {
-        endpoint = `/api/analyses/${editingAnalysis.id}`;
-        method = 'PUT';
-      }
-
-      const result = await apiCall(endpoint, {
-        method,
-        body: form
-      });
-
+      const endpoint = editingAnalysis ? `/api/analyses/${editingAnalysis.id}` : '/api/analyses';
+      const method = editingAnalysis ? 'PUT' : 'POST';
+      const result = await apiCall(endpoint, { method, body: form });
       if (result) {
-        const message = editingAnalysis ? 'Analysis updated successfully!' : 'Analysis created successfully!';
-        setSuccess(message);
-        showToast(message, 'success');
-        
-        // Reset form
-        setFormData({
-          symbol: "",
-          current_price: "",
-          entry_price: "",
-          target_price: "",
-          stop_loss: "",
-          quantity: "",
-          trade_type: "Long",
-          strategy_id: "",
-          strategy_name: "",
-          technical_analysis: "",
-          fundamental_analysis: "",
-          confidence_level: "Medium",
-          timeframe: "Intraday",
-          additional_notes: "",
-          images: []
-        });
-
-        imagePreviews.forEach(p => URL.revokeObjectURL(p.preview));
-        setImagePreviews([]);
-        setEditingAnalysis(null);
-        setShowForm(false);
-        loadAnalyses();
+        const msg = editingAnalysis ? 'Analysis updated successfully!' : 'Analysis created successfully!';
+        setSuccess(msg);
+        showToast(msg, 'success');
+        setShowForm(false); // close after success
+        resetForm();
+        await loadAnalyses();
       }
     } catch (err) {
-      console.error('Error saving analysis:', err);
       setError(`Failed to save analysis: ${err.message}`);
       showToast(`Failed to save analysis: ${err.message}`, 'error');
     } finally {
@@ -346,174 +374,115 @@ export default function PreTradeAnalysis() {
     }
   };
 
-  // Handle Cancel
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingAnalysis(null);
-    setError('');
-    imagePreviews.forEach(p => URL.revokeObjectURL(p.preview));
-    setImagePreviews([]);
-    setFormData({
-      symbol: "",
-      current_price: "",
-      entry_price: "",
-      target_price: "",
-      stop_loss: "",
-      quantity: "",
-      trade_type: "Long",
-      strategy_id: "",
-      strategy_name: "",
-      technical_analysis: "",
-      fundamental_analysis: "",
-      confidence_level: "Medium",
-      timeframe: "Intraday",
-      additional_notes: "",
-      images: []
-    });
-  };
-
-  // Handle View Analysis
-  const handleViewAnalysis = (analysis) => {
-    setSelectedAnalysis(analysis);
-    setShowAnalysisModal(true);
-  };
-
-  // Handle Edit Analysis
-  const handleEditAnalysis = (analysis) => {
-    setEditingAnalysis(analysis);
-    setFormData({
-      symbol: analysis.symbol || "",
-      current_price: analysis.current_price || "",
-      entry_price: analysis.entry_price || "",
-      target_price: analysis.target_price || "",
-      stop_loss: analysis.stop_loss || "",
-      quantity: analysis.quantity || "",
-      trade_type: analysis.trade_type || "Long",
-      strategy_id: analysis.strategy_id || "",
-      strategy_name: analysis.strategy_name || "",
-      technical_analysis: analysis.technical_analysis || "",
-      fundamental_analysis: analysis.fundamental_analysis || "",
-      confidence_level: analysis.confidence_level || "Medium",
-      timeframe: analysis.timeframe || "Intraday",
-      additional_notes: analysis.additional_notes || "",
-      images: []
-    });
-    setImagePreviews([]);
-    setShowForm(true);
-  };
-
-  // Handle Delete Analysis
-  const handleDeleteAnalysis = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this analysis?')) {
-      return;
-    }
-
-    try {
-      await apiCall(`/api/analyses/${id}`, {
-        method: 'DELETE'
-      });
-      setSuccess('✅ Analysis deleted successfully!');
-      showToast('Analysis deleted successfully!', 'success');
-      loadAnalyses();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      console.error('Error deleting analysis:', err);
-      setError(`Failed to delete analysis: ${err.message}`);
-      showToast(`Failed to delete analysis: ${err.message}`, 'error');
-    }
-  };
-
-  const calculateMetrics = (analysis) => {
-    const entryPrice = analysis.entry_price;
-    const targetPrice = analysis.target_price;
-    const stopLoss = analysis.stop_loss;
-    const quantity = analysis.quantity;
-    
-    let potentialProfit = 0;
-    let potentialLoss = 0;
-    let riskRewardRatio = 0;
-    
-    if (analysis.trade_type === "Long") {
-      potentialProfit = (targetPrice - entryPrice) * quantity;
-      potentialLoss = (entryPrice - stopLoss) * quantity;
-    } else {
-      potentialProfit = (entryPrice - targetPrice) * quantity;
-      potentialLoss = (stopLoss - entryPrice) * quantity;
-    }
-    
-    if (potentialLoss !== 0) {
-      riskRewardRatio = (potentialProfit / Math.abs(potentialLoss)).toFixed(2);
-    }
-    
+  // View modal helpers
+  const normalizeForView = (analysis) => {
+    if (!analysis || typeof analysis !== 'object') return null;
     return {
-      potentialProfit: potentialProfit.toFixed(2),
-      potentialLoss: Math.abs(potentialLoss).toFixed(2),
-      riskRewardRatio
+      symbol: analysis.symbol ?? '-',
+      current_price: analysis.current_price ?? analysis.currentprice ?? '-',
+      entry_price: analysis.entry_price ?? analysis.entryprice ?? '-',
+      target_price: analysis.target_price ?? analysis.targetprice ?? '-',
+      stop_loss: analysis.stop_loss ?? analysis.stoploss ?? '-',
+      quantity: analysis.quantity ?? '-',
+      trade_type: analysis.trade_type ?? analysis.tradetype ?? '-',
+      confidence_level: analysis.confidence_level ?? analysis.confidencelevel ?? '-',
+      timeframe: analysis.timeframe ?? '-',
+      technical_analysis: analysis.technical_analysis ?? analysis.technicalanalysis ?? '',
+      fundamental_analysis: analysis.fundamental_analysis ?? analysis.fundamentalanalysis ?? '',
+      additional_notes: analysis.additional_notes ?? analysis.additionalnotes ?? '',
+      created_at: analysis.created_at ?? analysis.createdAt ?? null,
+      images: Array.isArray(analysis.images) ? analysis.images : [],
     };
   };
 
-  const getConfidenceColor = (confidence) => {
-    switch (confidence) {
-      case "High": return "success";
-      case "Medium": return "warning";
-      case "Low": return "error";
-      default: return "default";
-    }
+  const handleViewAnalysis = (analysis) => {
+    const normalized = normalizeForView(analysis);
+    if (!normalized) return;
+    setSelectedAnalysis(normalized);
+    requestAnimationFrame(() => setShowAnalysisModal(true));
   };
 
-  const getTradeTypeColor = (type) => {
-    return type === "Long" ? "success" : "error";
+  // Delete
+  const requestDeleteAnalysis = (analysis) => {
+    setAnalysisToDelete(analysis);
+    setDeleteOpen(true);
   };
-
-  const formatDate = (dateString) => {
+  const confirmDeleteAnalysis = async () => {
+    if (!analysisToDelete) return;
     try {
-      return new Date(dateString).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit' 
-      });
-    } catch {
-      return 'N/A';
+      setDeleting(true);
+      await apiCall(`/api/analyses/${analysisToDelete.id}`, { method: 'DELETE' });
+      const msg = 'Analysis deleted successfully!';
+      setSuccess(msg);
+      showToast(msg, 'success');
+      await loadAnalyses();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(`Failed to delete analysis: ${err.message}`);
+      showToast(`Failed to delete analysis: ${err.message}`, 'error');
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setAnalysisToDelete(null);
     }
   };
+  const cancelDeleteAnalysis = () => {
+    setDeleteOpen(false);
+    setAnalysisToDelete(null);
+  };
+
+  // UI helpers
+  const calculateMetrics = (a) => {
+    const entry = Number(a.entry_price ?? 0);
+    const target = Number(a.target_price ?? 0);
+    const stop = Number(a.stop_loss ?? 0);
+    const qty = Number(a.quantity ?? 0);
+    let profit = 0, loss = 0, rr = 0;
+    if ((a.trade_type || 'Long') === 'Long') {
+      profit = (target - entry) * qty;
+      loss = (entry - stop) * qty;
+    } else {
+      profit = (entry - target) * qty;
+      loss = (stop - entry) * qty;
+    }
+    if (Math.abs(loss) > 0) rr = profit / Math.abs(loss);
+    return {
+      potentialProfit: (profit || 0).toFixed(2),
+      potentialLoss: Math.abs(loss || 0).toFixed(2),
+      riskRewardRatio: (rr || 0).toFixed(2),
+    };
+  };
+  const getConfidenceColor = (c) => c === 'High' ? 'success' : c === 'Medium' ? 'warning' : c === 'Low' ? 'error' : 'default';
+  const getTradeTypeColor = (t) => (t || 'Long') === 'Long' ? 'success' : 'error';
+  const formatDate = (s) => { try { return new Date(s).toLocaleDateString(); } catch { return 'N/A'; } };
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // Toast Container
-  const ToastContainer = () => (
-    <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
-      {toasts.map(toast => (
+  const Toasts = () => (
+    <div className="fixed top-4 right-4 z-[10000] space-y-2 p-3 sm:p-0">
+      {toasts.map(t => (
         <div
-          key={toast.id}
+          key={t.id}
           className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${
-            toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
-            toast.type === "info" ? "bg-blue-50 border-blue-500 text-blue-800" :
-            "bg-red-50 border-red-500 text-red-800"
+            t.type === 'success'
+              ? 'bg-green-50 border-green-500 text-green-800'
+              : t.type === 'info'
+              ? 'bg-blue-50 border-blue-500 text-blue-800'
+              : 'bg-red-50 border-red-500 text-red-800'
           }`}
         >
-          {toast.message}
+          {t.message}
         </div>
       ))}
     </div>
   );
 
-  if (loading && analyses.length === 0) {
-    return (
-      <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-        <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-slate-600 mt-3 text-sm sm:text-base">Loading analyses...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-      <ToastContainer />
+      <Toasts />
 
-      {/* Header Section */}
+      {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -523,9 +492,11 @@ export default function PreTradeAnalysis() {
               {!backendConnected && <span className="text-orange-600 ml-2">⚠️ Offline</span>}
             </p>
           </div>
+
+          {/* The Add button only hides while the form modal is open */}
           {!showForm && (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={openNewAnalysis}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,7 +507,7 @@ export default function PreTradeAnalysis() {
           )}
         </div>
 
-        {/* Search Bar */}
+        {/* Search */}
         <div className="relative mt-4 sm:mt-0">
           <input
             type="text"
@@ -551,479 +522,369 @@ export default function PreTradeAnalysis() {
         </div>
       </div>
 
-      {/* Success Message */}
+      {/* Notifications */}
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-green-600 text-sm sm:text-base">{success}</div>
-            <button 
-              onClick={() => setSuccess("")}
-              className="flex-shrink-0 text-green-600 hover:text-green-800 p-1"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button onClick={() => setSuccess('')} className="flex-shrink-0 text-green-600 hover:text-green-800 p-1">✕</button>
           </div>
         </div>
       )}
-
-      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-red-600 text-sm sm:text-base pr-2">{error}</div>
-            <button 
-              onClick={() => setError("")}
-              className="flex-shrink-0 text-red-600 hover:text-red-800 p-1"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button onClick={() => setError('')} className="flex-shrink-0 text-red-600 hover:text-red-800 p-1">✕</button>
           </div>
         </div>
       )}
 
-      {/* Form Section */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-          <h3 className="text-lg sm:text-xl font-bold text-black mb-4 sm:mb-6">
-            {editingAnalysis ? 'Edit Pre-Trade Analysis' : 'New Pre-Trade Analysis'}
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            {/* Basic Info Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Symbol */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
-                <input
-                  type="text"
-                  name="symbol"
-                  value={formData.symbol}
-                  onChange={handleInputChange}
-                  placeholder="AAPL"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Current Price */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Current Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="current_price"
-                  value={formData.current_price}
-                  onChange={handleInputChange}
-                  placeholder="150.00"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Entry Price */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="entry_price"
-                  value={formData.entry_price}
-                  onChange={handleInputChange}
-                  placeholder="151.00"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Target Price */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Target Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="target_price"
-                  value={formData.target_price}
-                  onChange={handleInputChange}
-                  placeholder="160.00"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Stop Loss */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Stop Loss *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="stop_loss"
-                  value={formData.stop_loss}
-                  onChange={handleInputChange}
-                  placeholder="145.00"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Quantity */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleInputChange}
-                  placeholder="100"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                  required
-                />
-              </div>
-
-              {/* Trade Type */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Type</label>
-                <select
-                  name="trade_type"
-                  value={formData.trade_type}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundSize: '1.5em 1.5em',
-                    paddingRight: '2.5rem'
-                  }}
-                >
-                  <option value="Long">Long</option>
-                  <option value="Short">Short</option>
-                </select>
-              </div>
-
-              {/* Confidence Level */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Confidence</label>
-                <select
-                  name="confidence_level"
-                  value={formData.confidence_level}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundSize: '1.5em 1.5em',
-                    paddingRight: '2.5rem'
-                  }}
-                >
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-
-              {/* Timeframe */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Timeframe</label>
-                <select
-                  name="timeframe"
-                  value={formData.timeframe}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundSize: '1.5em 1.5em',
-                    paddingRight: '2.5rem'
-                  }}
-                >
-                  <option value="Intraday">Intraday</option>
-                  <option value="Swing">Swing</option>
-                  <option value="Position">Position</option>
-                  <option value="Long Term">Long Term</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Strategy Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Strategy ID */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Strategy</label>
-                <select
-                  name="strategy_id"
-                  value={formData.strategy_id}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundSize: '1.5em 1.5em',
-                    paddingRight: '2.5rem'
-                  }}
-                >
-                  <option value="">Select strategy...</option>
-                  {strategies.map(strategy => (
-                    <option key={strategy.id} value={strategy.id}>
-                      {strategy.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Strategy Name */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Custom Name</label>
-                <input
-                  type="text"
-                  name="strategy_name"
-                  value={formData.strategy_name}
-                  onChange={handleInputChange}
-                  placeholder="Momentum, Breakout..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
-                />
-              </div>
-            </div>
-
-            {/* Technical Analysis */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Technical Analysis *</label>
-              <textarea
-                name="technical_analysis"
-                value={formData.technical_analysis}
-                onChange={handleInputChange}
-                placeholder="Chart patterns, indicators..."
-                rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
-                required
-              />
-            </div>
-
-            {/* Fundamental Analysis */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Fundamental Analysis</label>
-              <textarea
-                name="fundamental_analysis"
-                value={formData.fundamental_analysis}
-                onChange={handleInputChange}
-                placeholder="Earnings, news..."
-                rows={2}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
-              />
-            </div>
-
-            {/* Additional Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Additional Notes</label>
-              <textarea
-                name="additional_notes"
-                value={formData.additional_notes}
-                onChange={handleInputChange}
-                placeholder="Any thoughts..."
-                rows={2}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
-              />
-            </div>
-
-            {/* Image Upload - FIXED & IMPROVED */}
-            <div>
-              <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
-                <input
-                  type="file"
-                  name="images"
-                  multiple
-                  accept="image/*"
-                  onChange={handleInputChange}
-                  className="hidden"
-                  id="analysis-image-upload"
-                />
-                <label htmlFor="analysis-image-upload" className="cursor-pointer block">
-                  <ImageIcon sx={{ fontSize: '2rem', color: '#cbd5e1', marginBottom: '0.5rem' }} />
-                  <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
-                </label>
-                {formData.images.length > 0 && (
-                  <div className="mt-4 text-sm text-green-600 font-medium">
-                    ✓ {formData.images.length} image(s) selected
-                  </div>
-                )}
-              </div>
-
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {imagePreviews.map((preview, idx) => (
-                      <div key={idx} className="relative group">
-                        <img
-                          src={preview.preview}
-                          alt={`Preview ${idx + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImagePreview(idx)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
-                        >
-                          ×
-                        </button>
-                        <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200">
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4 overflow-hidden">
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl h-[90vh] flex flex-col overflow-hidden my-4">
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
+              <h2 className="text-lg font-bold text-slate-900">{editingAnalysis ? 'Edit Pre-Trade Analysis' : 'New Pre-Trade Analysis'}</h2>
               <button
                 type="button"
                 onClick={handleCancel}
-                disabled={submitting}
-                className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                className="text-slate-600 hover:text-slate-900 transition"
+                aria-label="Close form"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  editingAnalysis ? 'Update Analysis' : 'Create Analysis'
-                )}
+                ✕
               </button>
             </div>
-          </form>
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  {/* Grid 1 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
+                      <input
+                        type="text"
+                        name="symbol"
+                        value={formData.symbol}
+                        onChange={handleInputChange}
+                        placeholder="AAPL"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Current Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="current_price"
+                        value={formData.current_price}
+                        onChange={handleInputChange}
+                        placeholder="150.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="entry_price"
+                        value={formData.entry_price}
+                        onChange={handleInputChange}
+                        placeholder="151.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Target Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="target_price"
+                        value={formData.target_price}
+                        onChange={handleInputChange}
+                        placeholder="160.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Stop Loss *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="stop_loss"
+                        value={formData.stop_loss}
+                        onChange={handleInputChange}
+                        placeholder="145.00"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
+                      <input
+                        type="number"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleInputChange}
+                        placeholder="100"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dropdowns */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <CustomDropdown
+                      name="trade_type"
+                      label="Trade Type"
+                      placeholder="Select trade type..."
+                      value={formData.trade_type}
+                      onChange={handleDropdownChange}
+                      options={tradeTypeOptions}
+                      searchable={false}
+                    />
+                    <CustomDropdown
+                      name="confidence_level"
+                      label="Confidence"
+                      placeholder="Select confidence..."
+                      value={formData.confidence_level}
+                      onChange={handleDropdownChange}
+                      options={confidenceOptions}
+                      searchable={false}
+                    />
+                    <CustomDropdown
+                      name="timeframe"
+                      label="Timeframe"
+                      placeholder="Select timeframe..."
+                      value={formData.timeframe}
+                      onChange={handleDropdownChange}
+                      options={timeframeOptions}
+                      searchable={false}
+                    />
+                  </div>
+
+                  {/* Strategy */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <CustomDropdown
+                      name="strategy_id"
+                      label="Strategy"
+                      placeholder="Select strategy..."
+                      value={formData.strategy_id}
+                      onChange={handleDropdownChange}
+                      options={strategies.map(s => ({ value: s.id, label: s.name }))}
+                      searchable={false}
+                    />
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Custom Name</label>
+                      <input
+                        type="text"
+                        name="strategy_name"
+                        value={formData.strategy_name}
+                        onChange={handleInputChange}
+                        placeholder="Momentum, Breakout..."
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Textareas */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Technical Analysis *</label>
+                    <textarea
+                      name="technical_analysis"
+                      value={formData.technical_analysis}
+                      onChange={handleInputChange}
+                      placeholder="Chart patterns, indicators..."
+                      rows="3"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Fundamental Analysis</label>
+                    <textarea
+                      name="fundamental_analysis"
+                      value={formData.fundamental_analysis}
+                      onChange={handleInputChange}
+                      placeholder="Earnings, news..."
+                      rows="2"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Additional Notes</label>
+                    <textarea
+                      name="additional_notes"
+                      value={formData.additional_notes}
+                      onChange={handleInputChange}
+                      placeholder="Any thoughts..."
+                      rows="2"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white resize-none"
+                    />
+                  </div>
+
+                  {/* Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
+                      <input
+                        type="file"
+                        name="images"
+                        multiple
+                        accept="image/*"
+                        onChange={handleInputChange}
+                        className="hidden"
+                        id="analysis-image-upload"
+                      />
+                      <label htmlFor="analysis-image-upload" className="cursor-pointer block">
+                        <ImageIcon sx={{ fontSize: '2rem', color: '#cbd5e1', marginBottom: '0.5rem' }} />
+                        <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
+                      </label>
+                      {formData.images.length > 0 && (
+                        <div className="mt-4 text-sm text-green-600 font-medium">
+                          ✓ {formData.images.length} image(s) selected
+                        </div>
+                      )}
+                    </div>
+
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {imagePreviews.map((preview, idx) => (
+                            <div key={idx} className="relative group">
+                              <img
+                                src={preview.preview}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImagePreview(idx)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
+                              >
+                                ×
+                              </button>
+                              <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        editingAnalysis ? 'Update Analysis' : 'Create Analysis'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Table Section */}
-      {analyses.length === 0 ? (
+      {/* List / Empty / Loading */}
+      {loading ? (
         <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
-          <svg className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-slate-600 mt-3 text-sm sm:text-base">Loading analyses...</p>
+        </div>
+      ) : analyses.length === 0 ? (
+        <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
           <h3 className="text-base sm:text-lg font-semibold text-black mb-2">No Pre-Trade Analyses</h3>
           <p className="text-sm sm:text-base text-slate-600 mb-6">Start analyzing potential trades before executing them.</p>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={openNewAnalysis}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             <span>Create Analysis</span>
           </button>
         </div>
       ) : (
         <>
-          {/* Desktop Table */}
+          {/* Desktop table */}
           <div className="hidden md:block bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20 overflow-hidden">
             <TableContainer component={Paper} elevation={0}>
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#f1f5f9' }}>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Symbol</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Type</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Entry</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Target</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Stop</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>R:R</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Confidence</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px' }}>Images</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem', padding: '16px', textAlign: 'center' }}>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Symbol</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Entry</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Target</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Stop</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>R:R</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Confidence</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Images</TableCell>
+                    <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {analyses.map((analysis) => {
-                    const metrics = calculateMetrics(analysis);
-                    
+                  {analyses.map((a) => {
+                    const m = calculateMetrics(a);
                     return (
-                      <TableRow 
-                        key={analysis.id} 
-                        hover 
-                        sx={{ 
-                          '&:hover': { backgroundColor: '#f8fafc' },
-                          height: '72px'
-                        }}
-                      >
-                        <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500, padding: '16px' }}>{analysis.symbol}</TableCell>
-                        <TableCell sx={{ padding: '16px' }}>
-                          <Chip
-                            label={analysis.trade_type}
-                            size="small"
-                            color={getTradeTypeColor(analysis.trade_type)}
-                            variant="filled"
-                            sx={{ fontSize: '0.75rem' }}
-                          />
+                      <TableRow key={a.id} className="hover:bg-slate-50">
+                        <TableCell>{a.symbol}</TableCell>
+                        <TableCell>
+                          <Chip label={a.trade_type} size="small" color={getTradeTypeColor(a.trade_type)} sx={{ fontSize: '0.75rem' }} />
                         </TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>₹{analysis.entry_price}</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 600, padding: '16px' }}>₹{analysis.target_price}</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.875rem', color: '#ef4444', fontWeight: 600, padding: '16px' }}>₹{analysis.stop_loss}</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 600, padding: '16px' }}>{metrics.riskRewardRatio}:1</TableCell>
-                        <TableCell sx={{ padding: '16px' }}>
-                          <Chip
-                            label={analysis.confidence_level}
-                            size="small"
-                            color={getConfidenceColor(analysis.confidence_level)}
-                            variant="filled"
-                            sx={{ fontSize: '0.75rem' }}
-                          />
+                        <TableCell align="right">{a.entry_price}</TableCell>
+                        <TableCell align="right" sx={{ color: '#10b981', fontWeight: 600 }}>{a.target_price}</TableCell>
+                        <TableCell align="right" sx={{ color: '#ef4444', fontWeight: 600 }}>{a.stop_loss}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{m.riskRewardRatio}</TableCell>
+                        <TableCell>
+                          <Chip label={a.confidence_level} size="small" color={getConfidenceColor(a.confidence_level)} sx={{ fontSize: '0.75rem' }} />
                         </TableCell>
-                        <TableCell sx={{ padding: '16px' }}>
-                          {analysis.images && analysis.images.length > 0 ? (
-                            <Chip
-                              icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
-                              label={`${analysis.images.length}`}
-                              size="small"
-                              variant="outlined"
-                              sx={{ fontSize: '0.75rem' }}
-                            />
-                          ) : (
-                            <span className="text-xs text-slate-500">-</span>
-                          )}
+                        <TableCell>
+                          {a.images?.length > 0 ? (
+                            <Chip icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />} label={`${a.images.length}`} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                          ) : <span className="text-xs text-slate-500">-</span>}
                         </TableCell>
-                        <TableCell sx={{ padding: '16px', textAlign: 'center' }}>
+                        <TableCell sx={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                             <Tooltip title="View">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleViewAnalysis(analysis)}
-                                sx={{ color: '#64748b' }}
-                              >
+                              <IconButton size="small" onClick={() => handleViewAnalysis(a)} sx={{ color: '#64748b' }}>
                                 <VisibilityIcon sx={{ fontSize: '1rem' }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Edit">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleEditAnalysis(analysis)}
-                                sx={{ color: '#2563eb' }}
-                              >
+                              <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ color: '#2563eb' }}>
                                 <EditIcon sx={{ fontSize: '1rem' }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteAnalysis(analysis.id)}
-                                sx={{ color: '#dc2626' }}
-                              >
+                              <IconButton size="small" onClick={() => requestDeleteAnalysis(a)} sx={{ color: '#dc2626' }}>
                                 <DeleteIcon sx={{ fontSize: '1rem' }} />
                               </IconButton>
                             </Tooltip>
@@ -1039,87 +900,59 @@ export default function PreTradeAnalysis() {
 
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
-            {analyses.map((analysis) => {
-              const metrics = calculateMetrics(analysis);
-              
+            {analyses.map((a) => {
+              const m = calculateMetrics(a);
               return (
-                <div key={analysis.id} className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/30 hover:shadow-xl transition-all">
+                <div key={a.id} className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/30 hover:shadow-xl transition-all">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-bold text-slate-900 text-base">{analysis.symbol}</h4>
-                      <p className="text-xs text-slate-600 mt-1">{formatDate(analysis.created_at)}</p>
+                      <h4 className="font-bold text-slate-900 text-base">{a.symbol}</h4>
+                      <p className="text-xs text-slate-600 mt-1">{formatDate(a.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-slate-900">{metrics.riskRewardRatio}:1</div>
+                      <div className="text-lg font-bold text-slate-900">{m.riskRewardRatio}</div>
                     </div>
                   </div>
-                  
                   <div className="flex gap-2 mb-3 flex-wrap">
-                    <Chip
-                      label={analysis.trade_type}
-                      size="small"
-                      color={getTradeTypeColor(analysis.trade_type)}
-                      variant="filled"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                    <Chip
-                      label={analysis.confidence_level}
-                      size="small"
-                      color={getConfidenceColor(analysis.confidence_level)}
-                      variant="filled"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                    {analysis.images && analysis.images.length > 0 && (
+                    <Chip label={a.trade_type} size="small" color={getTradeTypeColor(a.trade_type)} sx={{ fontSize: '0.7rem' }} />
+                    <Chip label={a.confidence_level} size="small" color={getConfidenceColor(a.confidence_level)} sx={{ fontSize: '0.7rem' }} />
+                    {a.images?.length > 0 && (
                       <Chip
                         icon={<ImageIcon sx={{ fontSize: '0.75rem' }} />}
-                        label={`${analysis.images.length}`}
+                        label={`${a.images.length}`}
                         size="small"
                         variant="outlined"
                         sx={{ fontSize: '0.7rem' }}
                       />
                     )}
                   </div>
-                  
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     <div className="bg-blue-50 rounded-lg p-3 text-center">
                       <p className="text-xs text-blue-700 font-medium mb-1">Entry</p>
-                      <p className="font-bold text-slate-900 text-sm">₹{analysis.entry_price}</p>
+                      <p className="font-bold text-slate-900 text-sm">{a.entry_price}</p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-3 text-center">
                       <p className="text-xs text-green-700 font-medium mb-1">Target</p>
-                      <p className="font-bold text-slate-900 text-sm">₹{analysis.target_price}</p>
+                      <p className="font-bold text-slate-900 text-sm">{a.target_price}</p>
                     </div>
                     <div className="bg-red-50 rounded-lg p-3 text-center">
                       <p className="text-xs text-red-700 font-medium mb-1">Stop</p>
-                      <p className="font-bold text-slate-900 text-sm">₹{analysis.stop_loss}</p>
+                      <p className="font-bold text-slate-900 text-sm">{a.stop_loss}</p>
                     </div>
                   </div>
-                  
                   <div className="flex gap-1.5">
                     <Tooltip title="View">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewAnalysis(analysis)}
-                        sx={{ flex: 1, color: '#64748b' }}
-                      >
+                      <IconButton size="small" onClick={() => handleViewAnalysis(a)} sx={{ flex: 1, color: '#64748b' }}>
                         <VisibilityIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEditAnalysis(analysis)}
-                        sx={{ flex: 1, color: '#2563eb' }}
-                      >
+                      <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ flex: 1, color: '#2563eb' }}>
                         <EditIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteAnalysis(analysis.id)}
-                        sx={{ flex: 1, color: '#dc2626' }}
-                      >
+                      <IconButton size="small" onClick={() => requestDeleteAnalysis(a)} sx={{ flex: 1, color: '#dc2626' }}>
                         <DeleteIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </Tooltip>
@@ -1134,9 +967,8 @@ export default function PreTradeAnalysis() {
             <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg border border-white/20">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                 <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-                  {startItem}–{endItem} of {totalItems}
+                  {startItem}-{endItem} of {totalItems}
                 </div>
-
                 <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                   <Tooltip title="Previous">
                     <span>
@@ -1144,32 +976,20 @@ export default function PreTradeAnalysis() {
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         size="small"
-                        sx={{
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '0.375rem',
-                          color: currentPage === 1 ? '#cbd5e1' : '#64748b'
-                        }}
+                        sx={{ border: '1px solid #cbd5e1', borderRadius: '0.375rem', color: currentPage === 1 ? '#cbd5e1' : '#64748b' }}
                       >
                         <ChevronLeftIcon sx={{ fontSize: '1.25rem' }} />
                       </IconButton>
                     </span>
                   </Tooltip>
-
-                  <span className="text-xs sm:text-sm text-slate-600 font-semibold">
-                    {currentPage}/{totalPages}
-                  </span>
-
+                  <span className="text-xs sm:text-sm text-slate-600 font-semibold">{currentPage}/{totalPages}</span>
                   <Tooltip title="Next">
                     <span>
                       <IconButton
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         size="small"
-                        sx={{
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '0.375rem',
-                          color: currentPage === totalPages ? '#cbd5e1' : '#64748b'
-                        }}
+                        sx={{ border: '1px solid #cbd5e1', borderRadius: '0.375rem', color: currentPage === totalPages ? '#cbd5e1' : '#64748b' }}
                       >
                         <ChevronRightIcon sx={{ fontSize: '1.25rem' }} />
                       </IconButton>
@@ -1182,22 +1002,26 @@ export default function PreTradeAnalysis() {
         </>
       )}
 
-      {/* Analysis Detail Modal */}
+      {/* View Modal */}
       {showAnalysisModal && selectedAnalysis && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10001] bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-200 sticky top-0">
               <h2 className="text-lg font-bold text-slate-900">Analysis - {selectedAnalysis.symbol}</h2>
-              <button
-                onClick={() => setShowAnalysisModal(false)}
-                className="text-slate-600 hover:text-slate-900"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowAnalysisModal(false)} className="text-slate-600 hover:text-slate-900">✕</button>
             </div>
-
             <div className="p-6 space-y-6">
-              {/* Price Levels */}
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <span>Created:</span>
+                <span className="font-medium">{selectedAnalysis.created_at ? formatDate(selectedAnalysis.created_at) : 'N/A'}</span>
+                <span className="ml-3">Type:</span>
+                <span className="font-medium">{selectedAnalysis.trade_type}</span>
+                <span className="ml-3">Confidence:</span>
+                <span className="font-medium">{selectedAnalysis.confidence_level}</span>
+                <span className="ml-3">Timeframe:</span>
+                <span className="font-medium">{selectedAnalysis.timeframe}</span>
+              </div>
+
               <div>
                 <h4 className="text-sm font-semibold text-slate-700 mb-3">Price Levels</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -1206,48 +1030,46 @@ export default function PreTradeAnalysis() {
                     { label: 'Entry', value: selectedAnalysis.entry_price, bg: 'bg-blue-50' },
                     { label: 'Target', value: selectedAnalysis.target_price, bg: 'bg-green-50' },
                     { label: 'Stop', value: selectedAnalysis.stop_loss, bg: 'bg-red-50' },
-                    { label: 'Qty', value: selectedAnalysis.quantity, bg: 'bg-slate-100' }
+                    { label: 'Qty', value: selectedAnalysis.quantity, bg: 'bg-slate-100' },
                   ].map((item, idx) => (
                     <div key={idx} className={`${item.bg} rounded-lg p-3 text-center`}>
                       <p className="text-xs font-medium text-slate-700 mb-1">{item.label}</p>
-                      <p className="font-bold text-slate-900 text-sm">₹{item.value}</p>
+                      <p className="text-sm font-bold text-slate-900">{item.value ?? '-'}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Risk & Reward */}
               <div>
-                <h4 className="text-sm font-semibold text-slate-700 mb-3">Risk & Reward</h4>
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">Risk Reward</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-green-50 rounded-lg p-3 text-center">
                     <p className="text-xs font-medium text-green-700 mb-1">Profit</p>
-                    <p className="font-bold text-green-600 text-sm">₹{calculateMetrics(selectedAnalysis).potentialProfit}</p>
+                    <p className="text-sm font-bold text-green-600">
+                      {calculateMetrics(selectedAnalysis).potentialProfit}
+                    </p>
                   </div>
                   <div className="bg-red-50 rounded-lg p-3 text-center">
                     <p className="text-xs font-medium text-red-700 mb-1">Loss</p>
-                    <p className="font-bold text-red-600 text-sm">₹{calculateMetrics(selectedAnalysis).potentialLoss}</p>
+                    <p className="text-sm font-bold text-red-600">
+                      {calculateMetrics(selectedAnalysis).potentialLoss}
+                    </p>
                   </div>
                   <div className="bg-indigo-50 rounded-lg p-3 text-center">
                     <p className="text-xs font-medium text-indigo-700 mb-1">R:R</p>
-                    <p className="font-bold text-slate-900 text-sm">{calculateMetrics(selectedAnalysis).riskRewardRatio}:1</p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {calculateMetrics(selectedAnalysis).riskRewardRatio}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Images Section */}
-              {selectedAnalysis.images && selectedAnalysis.images.length > 0 && (
+              {selectedAnalysis.images?.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-700 mb-3">Images ({selectedAnalysis.images.length})</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {selectedAnalysis.images.map((url, idx) => (
-                      <a
-                        key={idx}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative group"
-                      >
+                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="relative group">
                         <img
                           src={url}
                           alt={`Analysis image ${idx + 1}`}
@@ -1262,7 +1084,6 @@ export default function PreTradeAnalysis() {
                 </div>
               )}
 
-              {/* Technical Analysis */}
               {selectedAnalysis.technical_analysis && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-700 mb-2">Technical Analysis</h4>
@@ -1271,8 +1092,6 @@ export default function PreTradeAnalysis() {
                   </div>
                 </div>
               )}
-
-              {/* Fundamental Analysis */}
               {selectedAnalysis.fundamental_analysis && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-700 mb-2">Fundamental Analysis</h4>
@@ -1281,8 +1100,6 @@ export default function PreTradeAnalysis() {
                   </div>
                 </div>
               )}
-
-              {/* Notes */}
               {selectedAnalysis.additional_notes && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-700 mb-2">Notes</h4>
@@ -1303,20 +1120,28 @@ export default function PreTradeAnalysis() {
         </div>
       )}
 
+      {/* Delete Modal */}
+      <DeleteModal
+        open={deleteOpen}
+        title="Delete Analysis"
+        message={
+          analysisToDelete
+            ? `Are you sure you want to delete analysis "${analysisToDelete.symbol}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this analysis? This action cannot be undone.'
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleting}
+        onConfirm={confirmDeleteAnalysis}
+        onCancel={cancelDeleteAnalysis}
+      />
+
       <style jsx>{`
         @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
+        .animate-fade-in { animation: fade-in 0.3s ease-out; }
       `}</style>
     </div>
   );

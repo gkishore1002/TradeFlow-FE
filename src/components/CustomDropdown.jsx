@@ -1,5 +1,4 @@
-// components/CustomDropdown.jsx
-"use client";
+'use client';
 import React, { Fragment, useState, useRef, useEffect } from 'react';
 import { Transition } from '@headlessui/react';
 
@@ -20,17 +19,14 @@ export default function CustomDropdown({
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Filter options based on search term
   const filteredOptions = searchable
     ? options.filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : options;
 
-  // Get selected option
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find(opt => String(opt.value) === String(value));
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -38,12 +34,10 @@ export default function CustomDropdown({
         setSearchTerm('');
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Focus search input when dropdown opens
   useEffect(() => {
     if (isOpen && searchable && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -63,7 +57,6 @@ export default function CustomDropdown({
 
   return (
     <div className={`w-full ${className}`} ref={dropdownRef}>
-      {/* Label */}
       {label && (
         <label className="block text-xs font-semibold text-slate-700 mb-2">
           {label}
@@ -71,7 +64,6 @@ export default function CustomDropdown({
         </label>
       )}
 
-      {/* Dropdown Button */}
       <div className="relative">
         <button
           type="button"
@@ -94,16 +86,10 @@ export default function CustomDropdown({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </button>
 
-        {/* Dropdown Options */}
         <Transition
           as={Fragment}
           show={isOpen}
@@ -115,7 +101,6 @@ export default function CustomDropdown({
           leaveTo="transform opacity-0 scale-95"
         >
           <div className="absolute z-50 w-full mt-2 bg-white border border-slate-300 rounded-lg shadow-xl max-h-60 overflow-hidden">
-            {/* Search Input */}
             {searchable && (
               <div className="px-3 py-2 border-b border-slate-200 bg-slate-50">
                 <input
@@ -129,7 +114,6 @@ export default function CustomDropdown({
               </div>
             )}
 
-            {/* Options List */}
             <div className="overflow-y-auto max-h-56 sm:max-h-72">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option, index) => (
@@ -138,13 +122,13 @@ export default function CustomDropdown({
                     type="button"
                     onClick={() => handleSelect(option)}
                     className={`w-full px-3 py-2 text-left text-sm font-medium transition-colors duration-100 flex items-center justify-between ${
-                      selectedOption?.value === option.value
+                      String(selectedOption?.value) === String(option.value)
                         ? 'bg-blue-100 text-blue-900'
                         : 'text-slate-900 hover:bg-slate-100'
                     } ${index !== filteredOptions.length - 1 ? 'border-b border-slate-100' : ''}`}
                   >
                     <span className="truncate">{option.label}</span>
-                    {selectedOption?.value === option.value && (
+                    {String(selectedOption?.value) === String(option.value) && (
                       <svg className="w-4 h-4 text-blue-600 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -152,9 +136,7 @@ export default function CustomDropdown({
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-6 text-center text-slate-500 text-sm">
-                  No options found
-                </div>
+                <div className="px-3 py-6 text-center text-slate-500 text-sm">No options found</div>
               )}
             </div>
           </div>
