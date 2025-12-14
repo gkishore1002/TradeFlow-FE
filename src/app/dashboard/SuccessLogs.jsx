@@ -93,7 +93,7 @@ export default function SuccessLogs() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -111,7 +111,7 @@ export default function SuccessLogs() {
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         router.push('/login');
         return null;
@@ -172,7 +172,7 @@ export default function SuccessLogs() {
       });
 
       const data = await apiCall(`/api/trade-logs?${params}`);
-      
+
       if (data?.items) {
         // Group by strategy
         const grouped = {};
@@ -191,27 +191,27 @@ export default function SuccessLogs() {
               best_trade: 0
             };
           }
-          
+
           const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
           grouped[strategyName].trades.push(trade);
           grouped[strategyName].total_trades += 1;
-          
+
           if (pnl > 0) {
             grouped[strategyName].success_trades += 1;
             grouped[strategyName].best_trade = Math.max(grouped[strategyName].best_trade, pnl);
           } else if (pnl < 0) {
             grouped[strategyName].loss_trades += 1;
           }
-          
+
           grouped[strategyName].total_pnl += pnl;
         });
 
         // Calculate stats
         Object.values(grouped).forEach(strategy => {
-          strategy.win_rate = strategy.total_trades > 0 
+          strategy.win_rate = strategy.total_trades > 0
             ? ((strategy.success_trades / strategy.total_trades) * 100).toFixed(1)
             : 0;
-          strategy.avg_pnl = strategy.total_trades > 0 
+          strategy.avg_pnl = strategy.total_trades > 0
             ? strategy.total_pnl / strategy.total_trades
             : 0;
         });
@@ -467,11 +467,10 @@ export default function SuccessLogs() {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${
-            toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
-            toast.type === "info" ? "bg-blue-50 border-blue-500 text-blue-800" :
-            "bg-red-50 border-red-500 text-red-800"
-          }`}
+          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
+            toast.type === "info" ? "bg-[#f15f26]/10 border-[#f15f26] text-[#f15f26]" :
+              "bg-red-50 border-red-500 text-red-800"
+            }`}
         >
           {toast.message}
         </div>
@@ -484,7 +483,7 @@ export default function SuccessLogs() {
       <div className="flex items-center justify-center min-h-96">
         <ToastContainer />
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#f15f26] mx-auto mb-4"></div>
           <p className="text-black">Loading trading logs...</p>
         </div>
       </div>
@@ -530,7 +529,7 @@ export default function SuccessLogs() {
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-[#f15f26] text-white rounded-lg sm:rounded-xl font-semibold hover:bg-[#d94e1f] transition-all duration-200 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -556,7 +555,7 @@ export default function SuccessLogs() {
                   name="symbol"
                   value={formData.symbol}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f15f26] text-black bg-white"
                   placeholder="AAPL"
                   required
                 />
@@ -732,7 +731,7 @@ export default function SuccessLogs() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 bg-[#f15f26] text-white text-sm font-medium rounded-lg hover:bg-[#d94e1f] transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -766,7 +765,7 @@ export default function SuccessLogs() {
                 placeholder="Search strategies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
+                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f15f26] focus:border-transparent bg-white text-black"
               />
               <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -793,7 +792,7 @@ export default function SuccessLogs() {
                         <h3 className="text-base font-bold text-black truncate">{strategy.strategy_name}</h3>
                         <div className="flex items-center space-x-2 text-xs text-black mt-1">
                           <span className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                            <div className="w-2 h-2 bg-[#f15f26] rounded-full mr-1"></div>
                             {strategy.total_trades} trades
                           </span>
                           <span className="flex items-center">
@@ -809,10 +808,10 @@ export default function SuccessLogs() {
                         sx={{ fontSize: '0.75rem' }}
                       />
                     </div>
-                    
+
                     <button
                       onClick={() => handleViewStrategyTrades(strategy)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors text-sm"
+                      className="w-full bg-[#f15f26] hover:bg-[#d94e1f] text-white py-2 px-4 rounded-lg font-medium transition-colors text-sm"
                     >
                       View Trades ({strategy.total_trades})
                     </button>
@@ -864,7 +863,7 @@ export default function SuccessLogs() {
                               <IconButton
                                 size="small"
                                 onClick={() => handleViewStrategyTrades(strategy)}
-                                sx={{ color: '#2563eb' }}
+                                sx={{ color: '#f15f26' }}
                               >
                                 <VisibilityIcon sx={{ fontSize: '1rem' }} />
                               </IconButton>
@@ -886,7 +885,7 @@ export default function SuccessLogs() {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-white rounded-lg">
               <span className="text-xs sm:text-sm text-black">Total Trades</span>
-              <span className="text-lg sm:text-2xl font-bold text-blue-600">{stats.performance?.total_trades || 0}</span>
+              <span className="text-lg sm:text-2xl font-bold text-[#f15f26]">{stats.performance?.total_trades || 0}</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-white rounded-lg">
               <span className="text-xs sm:text-sm text-black">Win Rate</span>
@@ -939,7 +938,7 @@ export default function SuccessLogs() {
                     {selectedStrategy.trades.map((trade, index) => {
                       const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
                       return (
-                        <div 
+                        <div
                           key={index}
                           className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 border border-slate-200 hover:shadow-md transition-all"
                         >
@@ -1028,7 +1027,7 @@ export default function SuccessLogs() {
                                     <IconButton
                                       size="small"
                                       onClick={() => handleViewTradeDetail(trade)}
-                                      sx={{ color: '#2563eb' }}
+                                      sx={{ color: '#f15f26' }}
                                     >
                                       <VisibilityIcon sx={{ fontSize: '1rem' }} />
                                     </IconButton>

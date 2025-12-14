@@ -328,8 +328,8 @@ export default function PreTradeAnalysis() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.symbol || !formData.current_price || !formData.entry_price ||
-        !formData.target_price || !formData.stop_loss || !formData.quantity ||
-        !formData.technical_analysis) {
+      !formData.target_price || !formData.stop_loss || !formData.quantity ||
+      !formData.technical_analysis) {
       setError('Please fill in all required fields');
       return;
     }
@@ -464,13 +464,12 @@ export default function PreTradeAnalysis() {
       {toasts.map(t => (
         <div
           key={t.id}
-          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${
-            t.type === 'success'
-              ? 'bg-green-50 border-green-500 text-green-800'
-              : t.type === 'info'
+          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${t.type === 'success'
+            ? 'bg-green-50 border-green-500 text-green-800'
+            : t.type === 'info'
               ? 'bg-blue-50 border-blue-500 text-blue-800'
               : 'bg-red-50 border-red-500 text-red-800'
-          }`}
+            }`}
         >
           {t.message}
         </div>
@@ -497,7 +496,7 @@ export default function PreTradeAnalysis() {
           {!showForm && (
             <button
               onClick={openNewAnalysis}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#f15f26] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-[#d94e1f] transition-all duration-200 shadow-lg"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -794,7 +793,7 @@ export default function PreTradeAnalysis() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[#f15f26] text-white text-sm font-medium rounded-lg hover:bg-[#d94e1f] transition disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {submitting ? (
                         <>
@@ -879,7 +878,7 @@ export default function PreTradeAnalysis() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Edit">
-                              <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ color: '#2563eb' }}>
+                              <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ color: '#f15f26' }}>
                                 <EditIcon sx={{ fontSize: '1rem' }} />
                               </IconButton>
                             </Tooltip>
@@ -947,7 +946,7 @@ export default function PreTradeAnalysis() {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ flex: 1, color: '#2563eb' }}>
+                      <IconButton size="small" onClick={() => handleEditAnalysis(a)} sx={{ flex: 1, color: '#f15f26' }}>
                         <EditIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </Tooltip>

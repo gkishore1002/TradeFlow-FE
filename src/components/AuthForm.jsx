@@ -1,4 +1,3 @@
-// components/AuthForm.jsx
 "use client";
 
 import { useState } from "react";
@@ -259,7 +258,7 @@ export default function AuthForm() {
               value={signupData.firstName}
               onChange={handleSignupChange}
               placeholder="John"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
               required
               disabled={loading}
             />
@@ -276,7 +275,7 @@ export default function AuthForm() {
               value={signupData.lastName}
               onChange={handleSignupChange}
               placeholder="Doe"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
               required
               disabled={loading}
             />
@@ -293,7 +292,7 @@ export default function AuthForm() {
               value={signupData.email}
               onChange={handleSignupChange}
               placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
               required
               disabled={loading}
             />
@@ -311,7 +310,7 @@ export default function AuthForm() {
                 value={signupData.password}
                 onChange={handleSignupChange}
                 placeholder="••••••••"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
                 required
                 disabled={loading}
               />
@@ -347,7 +346,7 @@ export default function AuthForm() {
               value={signupData.confirmPassword}
               onChange={handleSignupChange}
               placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
               required
               disabled={loading}
             />
@@ -357,7 +356,7 @@ export default function AuthForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
+            className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#d94e1f] transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
           >
             {loading ? (
               <div className="flex items-center justify-center space-x-2">
@@ -376,7 +375,7 @@ export default function AuthForm() {
               type="button"
               onClick={toggleMode}
               disabled={loading}
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
+              className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
             >
               Sign in
             </button>
@@ -396,7 +395,7 @@ export default function AuthForm() {
               value={loginData.email}
               onChange={handleLoginChange}
               placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
               required
               disabled={loading}
             />
@@ -414,7 +413,7 @@ export default function AuthForm() {
                 value={loginData.password}
                 onChange={handleLoginChange}
                 placeholder="••••••••"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
                 required
                 disabled={loading}
               />
@@ -442,7 +441,7 @@ export default function AuthForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
+            className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#d94e1f] transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
           >
             {loading ? (
               <div className="flex items-center justify-center space-x-2">
@@ -461,7 +460,7 @@ export default function AuthForm() {
               type="button"
               onClick={toggleMode}
               disabled={loading}
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
+              className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
             >
               Sign up
             </button>

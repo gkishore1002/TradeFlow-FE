@@ -44,7 +44,7 @@ export default function Profile() {
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         console.warn('⚠️ No auth token found');
         router.push('/login');
@@ -60,7 +60,7 @@ export default function Profile() {
 
 
       console.log(`📡 API Call: ${API_BASE_URL}${endpoint}`);
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         console.warn('⏱️ Request timeout');
@@ -113,14 +113,14 @@ export default function Profile() {
   const loadUserProfile = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       // MATCHES YOUR BACKEND ENDPOINT: /api/auth/profile
       const response = await apiCall('/api/auth/profile');
-      
+
       if (response && response.user) {
         console.log('✅ Loaded from backend');
         const user = response.user;
-        
+
         setFirstName(user.first_name || "");
         setLastName(user.last_name || "");
         setEmail(user.email || "");
@@ -142,7 +142,7 @@ export default function Profile() {
         console.log('📦 Loading from localStorage');
         const storedFirstName = localStorage.getItem("first_name") || "Demo";
         const storedLastName = localStorage.getItem("last_name") || "User";
-        
+
         setFirstName(storedFirstName);
         setLastName(storedLastName);
         setEmail(localStorage.getItem("email") || "user@example.com");
@@ -154,7 +154,7 @@ export default function Profile() {
       console.error('❌ Error loading:', error);
       const storedFirstName = localStorage.getItem("first_name") || "Demo";
       const storedLastName = localStorage.getItem("last_name") || "User";
-      
+
       setFirstName(storedFirstName);
       setLastName(storedLastName);
       setEmail(localStorage.getItem("email") || "user@example.com");
@@ -228,7 +228,7 @@ export default function Profile() {
       if (result && result.user) {
         console.log('✅ Profile saved');
         setSuccessMessage("✅ Profile updated successfully!");
-        
+
         localStorage.setItem("first_name", firstName);
         localStorage.setItem("last_name", lastName);
         localStorage.setItem("email", email);
@@ -317,8 +317,8 @@ export default function Profile() {
 
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <Sidebar 
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+      <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         isMobile={isMobile}
@@ -343,7 +343,7 @@ export default function Profile() {
             <div className="mb-6 sm:mb-8 flex items-center gap-2 text-xs sm:text-sm">
               <button
                 onClick={navigateToDashboard}
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors hover:underline"
+                className="text-[#f15f26] hover:text-[#d94e1f] font-medium transition-colors hover:underline"
               >
                 Dashboard
               </button>
@@ -366,7 +366,7 @@ export default function Profile() {
             {successMessage && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 animate-fade-in">
                 <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
                 <span className="text-green-800 font-medium text-xs sm:text-sm">{successMessage}</span>
               </div>
@@ -377,7 +377,7 @@ export default function Profile() {
             {errorMessage && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
                 <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                 </svg>
                 <span className="text-red-800 font-medium text-xs sm:text-sm">{errorMessage}</span>
               </div>
@@ -410,11 +410,10 @@ export default function Profile() {
                               setActiveTab(tab.id);
                               if (isMobile) setSidebarOpen(false);
                             }}
-                            className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-all text-left text-sm ${
-                              activeTab === tab.id
-                                ? 'bg-blue-50 border-l-4 border-blue-600 text-blue-700 font-semibold'
+                            className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-all text-left text-sm ${activeTab === tab.id
+                                ? 'bg-[#f15f26]/10 border-l-4 border-[#f15f26] text-[#f15f26] font-semibold'
                                 : 'text-slate-700 hover:bg-slate-50'
-                            }`}
+                              }`}
                           >
                             <Icon sx={{ fontSize: '1.25rem' }} />
                             <span>{tab.label}</span>
@@ -437,7 +436,7 @@ export default function Profile() {
                         {!isEditing && (
                           <button
                             onClick={() => setIsEditing(true)}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
+                            className="px-4 py-2 bg-[#f15f26] hover:bg-[#d94e1f] text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -462,11 +461,10 @@ export default function Profile() {
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                                  isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
+                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#f15f26]'
                                     : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
-                                }`}
+                                  }`}
                               />
                             </div>
 
@@ -480,11 +478,10 @@ export default function Profile() {
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                                  isEditing
+                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
                                     ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
-                                }`}
+                                  }`}
                               />
                             </div>
 
@@ -498,11 +495,10 @@ export default function Profile() {
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                                  isEditing
+                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
                                     ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
-                                }`}
+                                  }`}
                               />
                             </div>
                           </div>
@@ -519,11 +515,10 @@ export default function Profile() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                                  isEditing
+                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
                                     ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
-                                }`}
+                                  }`}
                               />
                             </div>
 
@@ -537,11 +532,10 @@ export default function Profile() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                                  isEditing
+                                className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
                                     ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
-                                }`}
+                                  }`}
                               />
                             </div>
                           </div>
@@ -563,7 +557,7 @@ export default function Profile() {
                             <button
                               onClick={handleSave}
                               disabled={isSaving}
-                              className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-all disabled:opacity-50 flex items-center gap-2"
+                              className="px-6 py-2.5 rounded-lg bg-[#f15f26] hover:bg-[#d94e1f] text-white font-medium text-sm transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                               {isSaving ? (
                                 <>
@@ -592,7 +586,7 @@ export default function Profile() {
                       <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8">
                         <div className="flex flex-col items-center justify-center py-16 sm:py-20">
                           <svg className="w-16 h-16 sm:w-20 sm:h-20 text-slate-300 mb-4 sm:mb-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
                           </svg>
                           <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Coming Soon</h3>
                           <p className="text-slate-600 text-center text-sm sm:text-base max-w-sm">

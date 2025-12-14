@@ -5,7 +5,7 @@ import logo from "@/assets/logo.png";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
       {/* Left Side - Branding (hidden on mobile/tablet, visible on desktop) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 items-center justify-center p-6 lg:p-8 xl:p-12">
         <div className="text-center space-y-2 lg:space-y-2 xl:space-y-2 max-w-sm lg:max-w-md xl:max-w-lg">
@@ -22,21 +22,21 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          
+
           {/* App Name */}
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent -mt-2 lg:-mt-3 xl:-mt-4">
+          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-800 -mt-2 lg:-mt-3 xl:-mt-4">
             TradeFlow
           </h1>
-          
+
           {/* Tagline */}
           <p className="text-lg lg:text-xl xl:text-2xl text-slate-600 font-medium leading-relaxed px-2 pt-2 lg:pt-3">
             Streamline your trading experience with intelligent analytics and seamless execution
           </p>
-          
+
           {/* Feature highlights */}
           <div className="space-y-3 lg:space-y-4 pt-6 lg:pt-8">
             <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-[#f15f26] to-[#3f65ad] rounded-full"></div>
               <span className="text-sm lg:text-base text-slate-700 font-medium">Real-time market data</span>
             </div>
             <div className="flex items-center justify-center space-x-3">
@@ -66,14 +66,14 @@ export default function LoginPage() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent -mt-1 md:-mt-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 -mt-1 md:-mt-2">
               TradeFlow
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 mt-1 md:mt-2 px-4">
               Your intelligent trading companion
             </p>
           </div>
-          
+
           {/* Welcome message */}
           <div className="text-center space-y-1 md:space-y-2">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-2xl font-bold text-slate-800">
@@ -83,12 +83,12 @@ export default function LoginPage() {
               Sign in to continue your trading journey
             </p>
           </div>
-          
+
           {/* Auth Form */}
           <div className="w-full">
             <AuthForm />
           </div>
-          
+
           {/* Security badge */}
           <div className="text-center pt-3 md:pt-4">
             <div className="inline-flex items-center space-x-2 text-xs sm:text-sm text-slate-500">
@@ -100,7 +100,7 @@ export default function LoginPage() {
           {/* Mobile feature highlights (visible only on mobile) */}
           <div className="block sm:hidden space-y-3 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-gradient-to-r from-[#f15f26] to-[#3f65ad] rounded-full"></div>
               <span className="text-xs text-slate-600">Real-time data</span>
             </div>
             <div className="flex items-center justify-center space-x-2">

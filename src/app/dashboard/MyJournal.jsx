@@ -29,7 +29,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5
 export default function MyJournal() {
   const router = useRouter();
   const toastRef = useRef(0);
-  
+
   // State management
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +94,7 @@ export default function MyJournal() {
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         router.push('/login');
         return null;
@@ -150,7 +150,7 @@ export default function MyJournal() {
       setLoading(true);
       const params = buildParams();
       const data = await apiCall(`/api/trade-logs?${params}`);
-      
+
       if (data && data.items) {
         setTrades(data.items);
         setCurrentPage(data.pagination.page);
@@ -208,7 +208,7 @@ export default function MyJournal() {
   // Form change handler
   const handleFormChange = (e) => {
     const { name, value, type, files } = e.target;
-    
+
     if (type === 'file') {
       const fileArray = Array.from(files || []);
       setFormData(prev => ({
@@ -245,11 +245,11 @@ export default function MyJournal() {
   const removeImagePreview = (index) => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     const newImages = formData.images.filter((_, i) => i !== index);
-    
+
     if (imagePreviews[index]) {
       URL.revokeObjectURL(imagePreviews[index].preview);
     }
-    
+
     setImagePreviews(newPreviews);
     setFormData(prev => ({
       ...prev,
@@ -280,18 +280,18 @@ export default function MyJournal() {
 
       // Prepare form data
       const form = new FormData();
-      
+
       form.append('symbol', formData.symbol.toUpperCase());
       form.append('entry_price', parseFloat(formData.entry_price));
       form.append('exit_price', parseFloat(formData.exit_price));
       form.append('quantity', parseInt(formData.quantity));
-      
+
       const entryDateObj = new Date(formData.entry_date);
       const exitDateObj = new Date(formData.exit_date);
-      
+
       form.append('entry_date', entryDateObj.toISOString());
       form.append('exit_date', exitDateObj.toISOString());
-      
+
       // Handle strategy
       if (formData.strategy_id) {
         form.append('strategy_id', parseInt(formData.strategy_id));
@@ -302,7 +302,7 @@ export default function MyJournal() {
       } else if (formData.trading_strategy) {
         form.append('trading_strategy', formData.trading_strategy);
       }
-      
+
       if (formData.trade_notes) {
         form.append('trade_notes', formData.trade_notes);
       }
@@ -328,7 +328,7 @@ export default function MyJournal() {
         const message = editingTrade ? 'Trade updated successfully!' : 'Trade created successfully!';
         setSuccess(message);
         showToast(message, 'success');
-        
+
         setFormData({
           symbol: "",
           entry_price: "",
@@ -341,12 +341,12 @@ export default function MyJournal() {
           trade_notes: "",
           images: []
         });
-        
+
         imagePreviews.forEach(p => URL.revokeObjectURL(p.preview));
         setImagePreviews([]);
         setEditingTrade(null);
         setShowForm(false);
-        
+
         loadTrades();
       }
     } catch (err) {
@@ -382,7 +382,7 @@ export default function MyJournal() {
   // Edit trade
   const handleEditTrade = (trade) => {
     setEditingTrade(trade);
-    
+
     const formatDateForInput = (dateStr) => {
       if (!dateStr) return '';
       try {
@@ -456,11 +456,10 @@ export default function MyJournal() {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${
-            toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
+          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
             toast.type === "info" ? "bg-blue-50 border-blue-500 text-blue-800" :
-            "bg-red-50 border-red-500 text-red-800"
-          }`}
+              "bg-red-50 border-red-500 text-red-800"
+            }`}
         >
           {toast.message}
         </div>
@@ -485,7 +484,7 @@ export default function MyJournal() {
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#f15f26] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-[#d94e1f] transition-all duration-200 shadow-lg"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -515,7 +514,7 @@ export default function MyJournal() {
         <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-green-600 text-sm sm:text-base">{success}</div>
-            <button 
+            <button
               onClick={() => setSuccess("")}
               className="flex-shrink-0 text-green-600 hover:text-green-800 p-1"
             >
@@ -532,7 +531,7 @@ export default function MyJournal() {
         <div className="bg-red-50 border border-red-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-red-600 text-sm sm:text-base pr-2">{error}</div>
-            <button 
+            <button
               onClick={() => setError("")}
               className="flex-shrink-0 text-red-600 hover:text-red-800 p-1"
             >
@@ -616,7 +615,7 @@ export default function MyJournal() {
                             <IconButton
                               size="small"
                               onClick={() => handleEditTrade(trade)}
-                              sx={{ color: '#2563eb' }}
+                              sx={{ color: '#f15f26' }}
                             >
                               <EditIcon sx={{ fontSize: '1rem' }} />
                             </IconButton>
@@ -655,7 +654,7 @@ export default function MyJournal() {
                     sx={{ fontSize: '0.75rem' }}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   <div className="bg-blue-50 rounded-lg p-3 text-center">
                     <p className="text-xs text-blue-700 font-medium mb-1">Entry</p>
@@ -682,7 +681,7 @@ export default function MyJournal() {
                     />
                   </div>
                 )}
-                
+
                 <div className="flex gap-1.5">
                   <Tooltip title="View">
                     <IconButton
@@ -697,7 +696,7 @@ export default function MyJournal() {
                     <IconButton
                       size="small"
                       onClick={() => handleEditTrade(trade)}
-                      sx={{ flex: 1, color: '#2563eb' }}
+                      sx={{ flex: 1, color: '#f15f26' }}
                     >
                       <EditIcon sx={{ fontSize: '1rem' }} />
                     </IconButton>
