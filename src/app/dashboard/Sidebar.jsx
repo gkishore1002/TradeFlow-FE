@@ -5,11 +5,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import Image from "next/image";
 import logo from "@/assets/logo.png";
 
-const Sidebar = ({ 
-  activeTab, 
-  setActiveTab, 
-  sidebarOpen, 
-  setSidebarOpen, 
+const Sidebar = ({
+  activeTab,
+  setActiveTab,
+  sidebarOpen,
+  setSidebarOpen,
   isMobile,
   handleLogout
 }) => {
@@ -57,6 +57,15 @@ const Sidebar = ({
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      )
+    },
+    {
+      id: "charts",
+      name: "Charts",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 13.5a2.5 2.5 0 005 0v-4a2.5 2.5 0 00-5 0v4zm9-7.5a2.5 2.5 0 005 0v-4a2.5 2.5 0 00-5 0v4z"></path>
         </svg>
       )
     }
@@ -109,7 +118,7 @@ const Sidebar = ({
   const handleLogoutClick = () => {
     // Close sidebar immediately before logout
     setSidebarOpen(false);
-    
+
     // Call logout handler
     if (typeof handleLogout === 'function') {
       handleLogout();
@@ -120,7 +129,7 @@ const Sidebar = ({
     <>
       {/* Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         ></div>
@@ -177,11 +186,10 @@ const Sidebar = ({
               <button
                 key={item.id}
                 onClick={() => handleNavigation(item)}
-                className={`w-full flex items-center justify-start space-x-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl transition-all duration-200 ${
-                  activeTab === item.id
+                className={`w-full flex items-center justify-start space-x-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl transition-all duration-200 ${activeTab === item.id
                     ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
-                }`}
+                  }`}
               >
                 {item.icon}
                 <span className="font-medium text-sm lg:text-base">{item.name}</span>
@@ -191,7 +199,7 @@ const Sidebar = ({
 
           {/* Footer Section with Logout */}
           <div className="pt-4 border-t border-slate-200 mt-4">
-            <button 
+            <button
               onClick={handleLogoutClick}
               className="w-full flex items-center justify-start space-x-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200"
             >

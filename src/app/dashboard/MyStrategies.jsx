@@ -91,14 +91,14 @@ export default function MyStrategies() {
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         router.push('/login');
         return null;
       }
 
       const isFormData = options.body instanceof FormData;
-      
+
       const headers = {
         'Authorization': `Bearer ${token}`,
         ...(!isFormData && { 'Content-Type': 'application/json' }),
@@ -216,7 +216,7 @@ export default function MyStrategies() {
   // Input/file
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
-    
+
     if (type === 'file') {
       const fileArray = Array.from(files || []);
       setFormData(prev => ({
@@ -247,11 +247,11 @@ export default function MyStrategies() {
   const removeImagePreview = (index) => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     const newImages = formData.images.filter((_, i) => i !== index);
-    
+
     if (imagePreviews[index]) {
       URL.revokeObjectURL(imagePreviews[index].preview);
     }
-    
+
     setImagePreviews(newPreviews);
     setFormData(prev => ({
       ...prev,
@@ -277,11 +277,11 @@ export default function MyStrategies() {
       form.append('category', formData.category);
       form.append('risk_level', formData.risk_level);
       form.append('timeframe', formData.timeframe);
-      
+
       if (formData.description) form.append('description', formData.description);
       if (formData.trading_rules) form.append('trading_rules', formData.trading_rules);
       if (formData.additional_notes) form.append('additional_notes', formData.additional_notes);
-      
+
       formData.images.forEach(file => {
         form.append('images', file);
       });
@@ -293,6 +293,7 @@ export default function MyStrategies() {
         });
         setSuccess('✅ Strategy updated successfully!');
         showToast('Strategy updated successfully!', 'success');
+
       } else {
         await apiCall('/api/strategies', {
           method: "POST",
@@ -300,6 +301,7 @@ export default function MyStrategies() {
         });
         setSuccess('✅ Strategy created successfully!');
         showToast('Strategy created successfully!', 'success');
+
       }
 
       setShowForm(false);
@@ -382,6 +384,7 @@ export default function MyStrategies() {
       });
       setSuccess('✅ Strategy deleted successfully!');
       showToast('Strategy deleted successfully!', 'success');
+
       await fetchStrategies(pagination.page, searchQuery);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -426,11 +429,10 @@ export default function MyStrategies() {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${
-            toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
+          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm font-medium ${toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
             toast.type === "info" ? "bg-blue-50 border-blue-500 text-blue-800" :
-            "bg-red-50 border-red-500 text-red-800"
-          }`}
+              "bg-red-50 border-red-500 text-red-800"
+            }`}
         >
           {toast.message}
         </div>
@@ -508,7 +510,7 @@ export default function MyStrategies() {
         <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-green-600 text-sm sm:text-base">{success}</div>
-            <button 
+            <button
               onClick={() => setSuccess("")}
               className="flex-shrink-0 text-green-600 hover:text-green-800 p-1"
             >
@@ -523,7 +525,7 @@ export default function MyStrategies() {
         <div className="bg-red-50 border border-red-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
           <div className="flex items-start">
             <div className="flex-1 text-red-600 text-sm sm:text-base pr-2">{error}</div>
-            <button 
+            <button
               onClick={() => setError("")}
               className="flex-shrink-0 text-red-600 hover:text-red-800 p-1"
             >
@@ -740,7 +742,7 @@ export default function MyStrategies() {
                 {searchTerm ? 'No strategies found' : 'No strategies yet'}
               </h3>
               <p className="text-sm sm:text-base text-black mb-4">
-                {searchTerm 
+                {searchTerm
                   ? `No strategies match "${searchTerm}". Try adjusting your search.`
                   : 'Create your first trading strategy to get started'
                 }
@@ -759,7 +761,7 @@ export default function MyStrategies() {
               {/* Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {strategies.map((strategy) => (
-                  <div 
+                  <div
                     key={strategy.id}
                     className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/30 hover:shadow-xl transition-all duration-300 group"
                   >
@@ -892,11 +894,10 @@ export default function MyStrategies() {
                               key={pageNum}
                               type="button"
                               onClick={() => handlePageChange(pageNum)}
-                              className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md sm:rounded-lg ${
-                                pageNum === pagination.page
-                                  ? 'text-blue-600 bg-blue-50 border border-blue-300'
-                                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
-                              }`}
+                              className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md sm:rounded-lg ${pageNum === pagination.page
+                                ? 'text-blue-600 bg-blue-50 border border-blue-300'
+                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -925,7 +926,7 @@ export default function MyStrategies() {
       {/* Strategy View Modal */}
       {showStrategyModal && selectedStrategy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden">
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowStrategyModal(false)}
           ></div>

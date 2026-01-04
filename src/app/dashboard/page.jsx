@@ -1,13 +1,15 @@
-// app/dashboard/page.jsx
+// src/app/dashboard/page.jsx
 "use client";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import MyStrategies from "./MyStrategies";
-import MyJournal from "./MyJournal"; 
+import MyJournal from "./MyJournal";
 import PreTradeAnalysis from "./PreTradeAnalysis";
 import SuccessLogs from "./SuccessLogs";
+import Charts from "./Charts";
+import Notifications from "./Notifications";
 
 
 // Enhanced Success/Loss Ratio Card Component
@@ -60,7 +62,7 @@ const SuccessLossRatioCard = ({ stats, className }) => {
                 </linearGradient>
               </defs>
             </svg>
-            
+
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="text-center">
                 <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-slate-800">{totalTrades}</p>
@@ -139,6 +141,7 @@ const SuccessLossRatioCard = ({ stats, className }) => {
   );
 };
 
+
 // Enhanced Recent Trades Table Component
 const RecentTradesTable = ({ trades, formatCurrency }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -159,10 +162,10 @@ const RecentTradesTable = ({ trades, formatCurrency }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     });
   };
 
@@ -305,6 +308,7 @@ const RecentTradesTable = ({ trades, formatCurrency }) => {
   );
 };
 
+
 export default function Dashboard() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -313,19 +317,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  const [stats, setStats] = useState({
-    total_trades: 0,
-    win_rate: 0,
-    totalPnl: 0,
-    success: 0,
-    loss: 0
-  });
-  const [recentTrades, setRecentTrades] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
-  const [backendConnected, setBackendConnected] = useState(false);
 
   const [toasts, setToasts] = useState([]);
   const toastIdCounter = useRef(0);
@@ -340,6 +331,19 @@ export default function Dashboard() {
     }, 5000);
   }, []);
 
+  const [stats, setStats] = useState({
+    total_trades: 0,
+    win_rate: 0,
+    totalPnl: 0,
+    success: 0,
+    loss: 0
+  });
+  const [recentTrades, setRecentTrades] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [backendConnected, setBackendConnected] = useState(false);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -349,7 +353,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Get access token and user data from localStorage
+  // Get access token from localStorage
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('access_token');
@@ -357,12 +361,13 @@ export default function Dashboard() {
     return null;
   };
 
+  // ⭐ FIXED API CALL FUNCTION
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
-        console.log('No token found, redirecting to login');
+        console.log('❌ No token found, redirecting to login');
         router.push('/login');
         return null;
       }
@@ -372,44 +377,70 @@ export default function Dashboard() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
+        credentials: 'include',  // ⭐ CRITICAL: Include credentials
+        mode: 'cors',             // ⭐ CRITICAL: Enable CORS
         ...options,
       };
 
-      const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
+      console.log(`🔄 API Call: ${API_BASE}${endpoint}`);
       
+      const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
+
+      console.log(`📊 Response Status: ${response.status}`);
+
       if (response.status === 401) {
-        // Token expired or invalid
+        console.log('❌ 401: Token expired or invalid');
         localStorage.removeItem('access_token');
+        showToast("Session expired. Please login again.", "error");
         router.push('/login');
         return null;
       }
 
+      if (response.status === 404) {
+        console.error(`❌ 404: Endpoint not found - ${endpoint}`);
+        console.error(`Full URL: ${API_BASE}${endpoint}`);
+        throw new Error(`Endpoint not found: ${endpoint}`);
+      }
+
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
-        console.error(`API Error: ${response.status}`, errorText);
+        console.error(`❌ API Error: ${response.status}`, errorText);
         throw new Error(`Server returned ${response.status}`);
       }
 
       const data = await response.json();
+      console.log(`✅ Data received from ${endpoint}`);
       setBackendConnected(true);
       return data;
     } catch (error) {
-      console.error(`API call to ${endpoint} failed:`, error);
+      console.error(`❌ API call failed:`, error);
       setBackendConnected(false);
+      
+      if (error.message.includes('Failed to fetch')) {
+        showToast("Cannot connect to backend. Check if server is running.", "error");
+      }
+      
       throw error;
     }
-  }, [API_BASE, router]);
+  }, [API_BASE, router, showToast]);
 
+  // ⭐ FIXED LOAD DASHBOARD DATA FUNCTION
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
+      console.log('🔄 Loading dashboard data...');
+
       // Fetch stats
       try {
+        console.log('📊 Fetching: /api/trade-logs/stats');
         const statsData = await apiCall('/api/trade-logs/stats');
+        
         if (statsData && statsData.performance) {
+          console.log('✅ Stats loaded:', statsData);
           setStats({
             total_trades: statsData.performance.total_trades || 0,
             win_rate: statsData.performance.win_rate || 0,
@@ -417,26 +448,38 @@ export default function Dashboard() {
             success: statsData.counts?.success || 0,
             loss: statsData.counts?.loss || 0
           });
+        } else {
+          console.warn('⚠️ Unexpected stats structure:', statsData);
         }
       } catch (err) {
-        console.warn('Failed to fetch stats:', err);
+        console.error('❌ Stats fetch failed:', err);
+        // Continue even if stats fail
       }
 
       // Fetch recent trades
       try {
+        console.log('📋 Fetching: /api/trade-logs');
         const tradesData = await apiCall('/api/trade-logs?per_page=8&sort_by=created_at&sort_order=desc');
+        
         if (tradesData && tradesData.items && Array.isArray(tradesData.items)) {
+          console.log(`✅ Loaded ${tradesData.items.length} trades`);
           setRecentTrades(tradesData.items);
+        } else {
+          console.warn('⚠️ Unexpected trades structure:', tradesData);
+          setRecentTrades([]);
         }
       } catch (err) {
-        console.warn('Failed to fetch trades:', err);
+        console.error('❌ Trades fetch failed:', err);
+        setRecentTrades([]);
       }
 
       setLastUpdate(new Date().toLocaleTimeString());
-      showToast("Data loaded successfully", "success");
+      showToast("Dashboard loaded successfully", "success");
+      
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      console.error('❌ Dashboard load error:', error);
       setError(error.message);
+      showToast("Failed to load dashboard", "error");
     } finally {
       setLoading(false);
     }
@@ -460,7 +503,7 @@ export default function Dashboard() {
 
     // Load dashboard data
     loadDashboardData();
-  }, [loadDashboardData, router]);
+  }, [router, loadDashboardData]);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -550,7 +593,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <button 
+                  <button
                     onClick={handleManualRefresh}
                     className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
                     disabled={loading}
@@ -616,7 +659,7 @@ export default function Dashboard() {
             <SuccessLossRatioCard stats={stats} />
 
             {/* Recent Trades Table */}
-            <RecentTradesTable 
+            <RecentTradesTable
               trades={recentTrades}
               formatCurrency={formatCurrency}
             />
@@ -631,6 +674,10 @@ export default function Dashboard() {
         return <PreTradeAnalysis />;
       case "logs":
         return <SuccessLogs />;
+      case "charts":
+        return <Charts />;
+      case "notifications":
+        return <Notifications />;
       default:
         return null;
     }
@@ -641,7 +688,7 @@ export default function Dashboard() {
       <ToastContainer />
 
       {/* Sidebar Component */}
-      <Sidebar 
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sidebarOpen={sidebarOpen}
@@ -661,6 +708,7 @@ export default function Dashboard() {
           backendConnected={backendConnected}
           isMobile={isMobile}
           sidebarOpen={sidebarOpen}
+          setActiveTab={setActiveTab}
         />
 
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">

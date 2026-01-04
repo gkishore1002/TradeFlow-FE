@@ -362,6 +362,7 @@ export default function PreTradeAnalysis() {
         const msg = editingAnalysis ? 'Analysis updated successfully!' : 'Analysis created successfully!';
         setSuccess(msg);
         showToast(msg, 'success');
+
         setShowForm(false); // close after success
         resetForm();
         await loadAnalyses();
@@ -415,6 +416,7 @@ export default function PreTradeAnalysis() {
       const msg = 'Analysis deleted successfully!';
       setSuccess(msg);
       showToast(msg, 'success');
+
       await loadAnalyses();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {

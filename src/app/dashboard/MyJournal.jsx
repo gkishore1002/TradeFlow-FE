@@ -329,6 +329,7 @@ export default function MyJournal() {
         setSuccess(message);
         showToast(message, 'success');
 
+
         setFormData({
           symbol: "",
           entry_price: "",
@@ -422,6 +423,7 @@ export default function MyJournal() {
       await apiCall(`/api/trade-logs/${tradeToDelete.id}`, { method: 'DELETE' });
       setSuccess('✅ Trade deleted successfully!');
       showToast('Trade deleted successfully!', 'success');
+
       await loadTrades();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {

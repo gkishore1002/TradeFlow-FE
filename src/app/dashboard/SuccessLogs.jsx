@@ -361,10 +361,23 @@ export default function SuccessLogs() {
       formDataObj.append('entry_price', String(parseFloat(formData.entry_price)));
       formDataObj.append('exit_price', String(parseFloat(formData.exit_price)));
       formDataObj.append('quantity', String(parseInt(formData.quantity, 10)));
-      formDataObj.append('entry_date', formData.entry_date);
+      const entryDateObj = new Date(formData.entry_date);
+      formDataObj.append('entry_date', entryDateObj.toISOString());
 
-      if (formData.exit_date) formDataObj.append('exit_date', formData.exit_date);
-      if (formData.trading_strategy) formDataObj.append('trading_strategy', formData.trading_strategy);
+      if (formData.exit_date) {
+        const exitDateObj = new Date(formData.exit_date);
+        formDataObj.append('exit_date', exitDateObj.toISOString());
+      }
+
+      if (formData.trading_strategy) {
+        formDataObj.append('trading_strategy', formData.trading_strategy);
+        // Find strategy ID if available
+        const selectedStrategy = strategies.find(s => s.name === formData.trading_strategy);
+        if (selectedStrategy) {
+          formDataObj.append('strategy_id', String(selectedStrategy.id));
+        }
+      }
+
       if (formData.trade_notes) formDataObj.append('trade_notes', formData.trade_notes);
 
       selectedFiles.forEach((file) => {
@@ -540,210 +553,227 @@ export default function SuccessLogs() {
         </div>
       </div>
 
-      {/* Form Section */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-          <h3 className="text-lg sm:text-xl font-bold text-black mb-4 sm:mb-6">Add New Trade Log</h3>
-
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            {/* Form Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
-                <input
-                  type="text"
-                  name="symbol"
-                  value={formData.symbol}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f15f26] text-black bg-white"
-                  placeholder="AAPL"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  name="entry_price"
-                  value={formData.entry_price}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
-                  placeholder="150.25"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  name="exit_price"
-                  value={formData.exit_price}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
-                  placeholder="155.80"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
-                <input
-                  type="number"
-                  min="1"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
-                  placeholder="100"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date *</label>
-                <input
-                  type="date"
-                  name="entry_date"
-                  value={formData.entry_date}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date</label>
-                <input
-                  type="date"
-                  name="exit_date"
-                  value={formData.exit_date}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
-                />
-              </div>
-            </div>
-
-            {/* Strategy */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Trading Strategy</label>
-              <select
-                name="trading_strategy"
-                value={formData.trading_strategy}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 0.5rem center',
-                  backgroundSize: '1.5em 1.5em',
-                  paddingRight: '2.5rem'
-                }}
-              >
-                <option value="">Select a strategy...</option>
-                {strategies.map((strategy) => (
-                  <option key={strategy.id} value={strategy.name}>
-                    {strategy.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Images Upload */}
-            <div>
-              <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="log-image-upload"
-                />
-                <label htmlFor="log-image-upload" className="cursor-pointer block">
-                  <ImageIcon sx={{ fontSize: '2rem', color: '#cbd5e1', marginBottom: '0.5rem' }} />
-                  <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
-                </label>
-                {selectedFiles.length > 0 && (
-                  <div className="mt-4 text-sm text-green-600 font-medium">
-                    ✓ {selectedFiles.length} image(s) selected
-                  </div>
-                )}
-              </div>
-
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {imagePreviews.map((preview, idx) => (
-                      <div key={idx} className="relative group">
-                        <img
-                          src={preview.preview}
-                          alt={`Preview ${idx + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeFile(idx)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
-                        >
-                          ×
-                        </button>
-                        <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Trade Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Notes</label>
-              <textarea
-                name="trade_notes"
-                value={formData.trade_notes}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white resize-none"
-                placeholder="Trade rationale, lessons learned..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-hidden">
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="bg-slate-100 px-4 sm:px-6 py-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900">Add New Trade Log</h3>
               <button
                 type="button"
                 onClick={handleCancel}
-                disabled={submitting}
-                className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                className="text-slate-600 hover:text-slate-900 transition"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-[#f15f26] text-white text-sm font-medium rounded-lg hover:bg-[#d94e1f] transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  'Add Trade Log'
-                )}
+                ✕
               </button>
             </div>
-          </form>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  {/* Form Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Symbol *</label>
+                      <input
+                        type="text"
+                        name="symbol"
+                        value={formData.symbol}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f15f26] text-black bg-white"
+                        placeholder="AAPL"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        name="entry_price"
+                        value={formData.entry_price}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                        placeholder="150.25"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Price *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        name="exit_price"
+                        value={formData.exit_price}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                        placeholder="155.80"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Quantity *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                        placeholder="100"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Entry Date *</label>
+                      <input
+                        type="date"
+                        name="entry_date"
+                        value={formData.entry_date}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Exit Date</label>
+                      <input
+                        type="date"
+                        name="exit_date"
+                        value={formData.exit_date}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Strategy */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Trading Strategy</label>
+                    <select
+                      name="trading_strategy"
+                      value={formData.trading_strategy}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '1.5em 1.5em',
+                        paddingRight: '2.5rem'
+                      }}
+                    >
+                      <option value="">Select a strategy...</option>
+                      {strategies.map((strategy) => (
+                        <option key={strategy.id} value={strategy.name}>
+                          {strategy.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Images Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">Upload Images</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-all">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="log-image-upload"
+                      />
+                      <label htmlFor="log-image-upload" className="cursor-pointer block">
+                        <ImageIcon sx={{ fontSize: '2rem', color: '#cbd5e1', marginBottom: '0.5rem' }} />
+                        <p className="text-sm text-gray-600 font-medium">Click to upload or drag images here</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 16MB</p>
+                      </label>
+                      {selectedFiles.length > 0 && (
+                        <div className="mt-4 text-sm text-green-600 font-medium">
+                          ✓ {selectedFiles.length} image(s) selected
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Image Previews */}
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold text-slate-700 mb-3">Preview:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {imagePreviews.map((preview, idx) => (
+                            <div key={idx} className="relative group">
+                              <img
+                                src={preview.preview}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200 group-hover:opacity-75 transition"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeFile(idx)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 font-bold"
+                              >
+                                ×
+                              </button>
+                              <p className="text-xs text-gray-600 mt-1 truncate">{preview.file.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Trade Notes */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Notes</label>
+                    <textarea
+                      name="trade_notes"
+                      value={formData.trade_notes}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white resize-none"
+                      placeholder="Trade rationale, lessons learned..."
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[#f15f26] text-white text-sm font-medium rounded-lg hover:bg-[#d94e1f] transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        'Add Trade Log'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
