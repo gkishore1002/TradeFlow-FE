@@ -21,8 +21,10 @@ import {
   Visibility as VisibilityIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+import { API_BASE_URL } from "@/lib/constants";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { calculateProfitLoss, calculateWinRate } from "@/lib/utils/calculations";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function SuccessLogs() {
   const router = useRouter();
@@ -192,7 +194,7 @@ export default function SuccessLogs() {
             };
           }
 
-          const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+          const pnl = calculateProfitLoss(trade.entry_price, trade.exit_price, trade.quantity);
           grouped[strategyName].trades.push(trade);
           grouped[strategyName].total_trades += 1;
 
@@ -208,9 +210,7 @@ export default function SuccessLogs() {
 
         // Calculate stats
         Object.values(grouped).forEach(strategy => {
-          strategy.win_rate = strategy.total_trades > 0
-            ? ((strategy.success_trades / strategy.total_trades) * 100).toFixed(1)
-            : 0;
+          strategy.win_rate = calculateWinRate(strategy.success_trades, strategy.total_trades);
           strategy.avg_pnl = strategy.total_trades > 0
             ? strategy.total_pnl / strategy.total_trades
             : 0;
@@ -451,23 +451,7 @@ export default function SuccessLogs() {
     setShowTradeDetailModal(true);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch {
-      return '-';
-    }
-  };
-
-  const formatCurrency = (amount) => {
-    if (amount === null || amount === undefined) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  // Utility functions imported from @/lib/utils
 
   const getWinRateColor = (winRate) => {
     if (winRate >= 60) return 'success';
@@ -496,8 +480,8 @@ export default function SuccessLogs() {
       <div className="flex items-center justify-center min-h-96">
         <ToastContainer />
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#f15f26] mx-auto mb-4"></div>
-          <p className="text-black">Loading trading logs...</p>
+          <LoadingSpinner size="lg" />
+          <p className="text-black mt-4">Loading trading logs...</p>
         </div>
       </div>
     );
@@ -965,11 +949,11 @@ export default function SuccessLogs() {
                 <>
                   {/* Mobile View */}
                   <div className="block md:hidden space-y-3">
-                    {selectedStrategy.trades.map((trade, index) => {
-                      const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+                    {selectedStrategy.trades.map((trade, idx) => {
+                      const pnl = calculateProfitLoss(trade.entry_price, trade.exit_price, trade.quantity);
                       return (
                         <div
-                          key={index}
+                          key={idx}
                           className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 border border-slate-200 hover:shadow-md transition-all"
                         >
                           <div className="flex items-center justify-between mb-3">
@@ -1020,10 +1004,10 @@ export default function SuccessLogs() {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {selectedStrategy.trades.map((trade, index) => {
-                            const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+                          {selectedStrategy.trades.map((trade, idx) => {
+                            const pnl = calculateProfitLoss(trade.entry_price, trade.exit_price, trade.quantity);
                             return (
-                              <TableRow key={index} hover sx={{ height: '72px' }}>
+                              <TableRow key={idx} className="hover:bg-slate-50" sx={{ height: '72px' }}>
                                 <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500, padding: '16px' }}>{trade.symbol}</TableCell>
                                 <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>₹{trade.entry_price}</TableCell>
                                 <TableCell align="right" sx={{ fontSize: '0.875rem', padding: '16px' }}>₹{trade.exit_price}</TableCell>
@@ -1112,8 +1096,8 @@ export default function SuccessLogs() {
                 </div>
                 <div className="bg-indigo-50 rounded-lg p-3 text-center">
                   <p className="text-xs text-indigo-700 font-medium mb-1">P&L</p>
-                  <p className={`font-bold text-sm ${((selectedTrade.exit_price - selectedTrade.entry_price) * selectedTrade.quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency((selectedTrade.exit_price - selectedTrade.entry_price) * selectedTrade.quantity)}
+                  <p className={`font-bold text-sm ${calculateProfitLoss(selectedTrade.entry_price, selectedTrade.exit_price, selectedTrade.quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(calculateProfitLoss(selectedTrade.entry_price, selectedTrade.exit_price, selectedTrade.quantity))}
                   </p>
                 </div>
               </div>

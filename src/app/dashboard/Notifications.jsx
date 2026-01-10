@@ -2,6 +2,8 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/constants";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const Notifications = () => {
   const router = useRouter();
@@ -14,7 +16,7 @@ const Notifications = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const API_BASE = API_BASE_URL;
 
   // Get access token
   const getAuthToken = () => {
@@ -50,16 +52,16 @@ const Notifications = () => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         if (pageNum === 1) {
           setNotifications(data.items || []);
         } else {
           setNotifications(prev => [...prev, ...(data.items || [])]);
         }
-        
+
         // Fetch unread count separately
         fetchUnreadCount();
-        
+
         setTotalPages(data.pagination?.pages || 1);
         setHasMore(data.pagination?.has_next || false);
       } else if (response.status === 401) {
@@ -125,7 +127,7 @@ const Notifications = () => {
       });
 
       if (response.ok) {
-        setNotifications(prev => 
+        setNotifications(prev =>
           prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
@@ -214,7 +216,7 @@ const Notifications = () => {
   // Format time
   const formatTime = (dateString) => {
     if (!dateString) return 'N/A';
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleString('en-US', {
@@ -238,7 +240,7 @@ const Notifications = () => {
       alert: { color: 'bg-red-100 text-red-800', label: 'Alert' },
       system: { color: 'bg-slate-100 text-slate-800', label: 'System' }
     };
-    
+
     const badge = badges[type] || badges.system;
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
@@ -276,27 +278,24 @@ const Notifications = () => {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
             <button
               onClick={() => handleFilterChange('all')}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                filter === 'all'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${filter === 'all'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
             >
               All
             </button>
             <button
               onClick={() => handleFilterChange('unread')}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
-                filter === 'unread'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${filter === 'unread'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
             >
               Unread
               {unreadCount > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
-                  filter === 'unread' ? 'bg-white text-blue-600' : 'bg-red-500 text-white'
-                }`}>
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${filter === 'unread' ? 'bg-white text-blue-600' : 'bg-red-500 text-white'
+                  }`}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -323,7 +322,7 @@ const Notifications = () => {
       <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200">
         {loading && page === 1 ? (
           <div className="p-8 sm:p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <LoadingSpinner size="lg" />
             <p className="mt-4 text-slate-600 text-sm sm:text-base">Loading notifications...</p>
           </div>
         ) : notifications.length === 0 ? (
@@ -358,11 +357,11 @@ const Notifications = () => {
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse flex-shrink-0 mt-1"></div>
                     )}
                   </div>
-                  
+
                   <p className="text-xs text-slate-600 mb-2 line-clamp-2">
                     {notification.message}
                   </p>
-                  
+
                   <p className="text-xs text-slate-500 mb-3">
                     {formatTime(notification.created_at)}
                   </p>
@@ -436,9 +435,8 @@ const Notifications = () => {
                   {notifications.map((notification) => (
                     <tr
                       key={notification.id}
-                      className={`hover:bg-slate-50 transition-colors ${
-                        !notification.is_read ? 'bg-blue-50' : ''
-                      }`}
+                      className={`hover:bg-slate-50 transition-colors ${!notification.is_read ? 'bg-blue-50' : ''
+                        }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         {!notification.is_read ? (
@@ -489,11 +487,10 @@ const Notifications = () => {
                                 setShowDeleteConfirm(notification.id);
                               }
                             }}
-                            className={`p-2 rounded-lg transition-colors ${
-                              showDeleteConfirm === notification.id
-                                ? 'bg-red-100 text-red-700'
-                                : 'text-red-600 hover:bg-red-50'
-                            }`}
+                            className={`p-2 rounded-lg transition-colors ${showDeleteConfirm === notification.id
+                              ? 'bg-red-100 text-red-700'
+                              : 'text-red-600 hover:bg-red-50'
+                              }`}
                             title={showDeleteConfirm === notification.id ? 'Click again to confirm' : 'Delete'}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

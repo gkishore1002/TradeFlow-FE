@@ -1,13 +1,11 @@
-// app/pages/help/page.jsx
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../dashboard/Navbar";
-import Sidebar from "../../dashboard/Sidebar";
+import Navbar from "@/components/layout/Navbar";
+import Sidebar from "@/components/layout/Sidebar";
+import { API_BASE_URL } from "@/lib/constants";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-
-export default function Help() {
+export default function HelpPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("general");
   const [sidebarOpen, setSidebarOpen] = useState(false);

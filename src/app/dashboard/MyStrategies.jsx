@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import CustomDropdown from "@/components/CustomDropdown";
+import Dropdown from "@/components/ui/Dropdown";
 import { Plus, X, Trash2, Eye, Edit2, Calendar, Tag, ChevronLeft, ChevronRight, Search, Image as ImageIcon } from "lucide-react";
-import DeleteModal from "@/components/DeleteModal";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+import DeleteModal from "@/components/shared/DeleteModal";
+import { API_BASE_URL } from "@/lib/constants";
+import { formatDate } from "@/lib/utils/format";
 
 export default function MyStrategies() {
   const router = useRouter();
@@ -415,14 +415,7 @@ export default function MyStrategies() {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch {
-      return "N/A";
-    }
-  };
+  // formatDate imported from @/lib/utils/format
 
   const Toasts = () => (
     <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
@@ -571,7 +564,7 @@ export default function MyStrategies() {
 
                   {/* Category, Risk Level, Timeframe */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <CustomDropdown
+                    <Dropdown
                       name="category"
                       label="Category *"
                       placeholder="Select category..."
@@ -582,7 +575,7 @@ export default function MyStrategies() {
                       required={true}
                     />
 
-                    <CustomDropdown
+                    <Dropdown
                       name="risk_level"
                       label="Risk Level *"
                       placeholder="Select risk level..."
@@ -593,7 +586,7 @@ export default function MyStrategies() {
                       required={true}
                     />
 
-                    <CustomDropdown
+                    <Dropdown
                       name="timeframe"
                       label="Timeframe *"
                       placeholder="Select timeframe..."

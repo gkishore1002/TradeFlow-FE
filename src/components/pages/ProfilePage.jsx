@@ -1,19 +1,17 @@
-// app/pages/profile/page.jsx
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../dashboard/Navbar";
-import Sidebar from "../../dashboard/Sidebar";
+import Navbar from "@/components/layout/Navbar";
+import Sidebar from "@/components/layout/Sidebar";
 import {
   Person as PersonIcon,
   Security as SecurityIcon,
 } from "@mui/icons-material";
+import { API_BASE_URL } from "@/lib/constants";
+import { formatCurrency, formatDate } from '@/lib/utils/format';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-
-
-export default function Profile() {
+export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
   const [firstName, setFirstName] = useState("");
@@ -411,8 +409,8 @@ export default function Profile() {
                               if (isMobile) setSidebarOpen(false);
                             }}
                             className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-all text-left text-sm ${activeTab === tab.id
-                                ? 'bg-[#f15f26]/10 border-l-4 border-[#f15f26] text-[#f15f26] font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50'
+                              ? 'bg-[#f15f26]/10 border-l-4 border-[#f15f26] text-[#f15f26] font-semibold'
+                              : 'text-slate-700 hover:bg-slate-50'
                               }`}
                           >
                             <Icon sx={{ fontSize: '1.25rem' }} />
@@ -462,8 +460,8 @@ export default function Profile() {
                                 onChange={(e) => setFirstName(e.target.value)}
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#f15f26]'
-                                    : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
+                                  ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#f15f26]'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
                                   }`}
                               />
                             </div>
@@ -479,8 +477,8 @@ export default function Profile() {
                                 onChange={(e) => setLastName(e.target.value)}
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
+                                  ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
                                   }`}
                               />
                             </div>
@@ -496,8 +494,8 @@ export default function Profile() {
                                 onChange={(e) => setPhone(e.target.value)}
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
+                                  ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
                                   }`}
                               />
                             </div>
@@ -516,8 +514,8 @@ export default function Profile() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
+                                  ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
                                   }`}
                               />
                             </div>
@@ -533,8 +531,8 @@ export default function Profile() {
                                 onChange={(e) => setAddress(e.target.value)}
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${isEditing
-                                    ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
+                                  ? 'border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed'
                                   }`}
                               />
                             </div>

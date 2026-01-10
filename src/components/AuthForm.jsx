@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/constants";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function AuthForm() {
 
       // API Call
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}/api/auth/login`,
+        `${API_BASE_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
@@ -172,7 +173,7 @@ export default function AuthForm() {
 
       // API Call
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}/api/auth/register`,
+        `${API_BASE_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {

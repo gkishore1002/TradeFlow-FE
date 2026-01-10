@@ -12,10 +12,12 @@ import {
   ChevronRight as ChevronRightIcon,
   Image as ImageIcon,
 } from '@mui/icons-material';
-import CustomDropdown from '@/components/CustomDropdown';
-import DeleteModal from '@/components/DeleteModal';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+import Dropdown from '@/components/ui/Dropdown';
+import DeleteModal from '@/components/shared/DeleteModal';
+import { API_BASE_URL } from '@/lib/constants';
+import { formatDate } from '@/lib/utils/format';
+import { calculateTradeMetrics } from '@/lib/utils/calculations';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function PreTradeAnalysis() {
   const router = useRouter();
@@ -456,7 +458,7 @@ export default function PreTradeAnalysis() {
   };
   const getConfidenceColor = (c) => c === 'High' ? 'success' : c === 'Medium' ? 'warning' : c === 'Low' ? 'error' : 'default';
   const getTradeTypeColor = (t) => (t || 'Long') === 'Long' ? 'success' : 'error';
-  const formatDate = (s) => { try { return new Date(s).toLocaleDateString(); } catch { return 'N/A'; } };
+  // formatDate imported from @/lib/utils/format
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -642,7 +644,7 @@ export default function PreTradeAnalysis() {
 
                   {/* Dropdowns */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <CustomDropdown
+                    <Dropdown
                       name="trade_type"
                       label="Trade Type"
                       placeholder="Select trade type..."
@@ -651,7 +653,7 @@ export default function PreTradeAnalysis() {
                       options={tradeTypeOptions}
                       searchable={false}
                     />
-                    <CustomDropdown
+                    <Dropdown
                       name="confidence_level"
                       label="Confidence"
                       placeholder="Select confidence..."
@@ -660,7 +662,7 @@ export default function PreTradeAnalysis() {
                       options={confidenceOptions}
                       searchable={false}
                     />
-                    <CustomDropdown
+                    <Dropdown
                       name="timeframe"
                       label="Timeframe"
                       placeholder="Select timeframe..."
@@ -673,7 +675,7 @@ export default function PreTradeAnalysis() {
 
                   {/* Strategy */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <CustomDropdown
+                    <Dropdown
                       name="strategy_id"
                       label="Strategy"
                       placeholder="Select strategy..."
@@ -817,7 +819,7 @@ export default function PreTradeAnalysis() {
       {/* List / Empty / Loading */}
       {loading ? (
         <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+          <LoadingSpinner size="md" />
           <p className="text-slate-600 mt-3 text-sm sm:text-base">Loading analyses...</p>
         </div>
       ) : analyses.length === 0 ? (

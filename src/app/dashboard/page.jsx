@@ -1,22 +1,25 @@
-// src/app/dashboard/page.jsx
 "use client";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+import Sidebar from "@/components/layout/Sidebar";
+import Navbar from "@/components/layout/Navbar";
 import MyStrategies from "./MyStrategies";
 import MyJournal from "./MyJournal";
 import PreTradeAnalysis from "./PreTradeAnalysis";
 import SuccessLogs from "./SuccessLogs";
 import Charts from "./Charts";
 import Notifications from "./Notifications";
+import { API_BASE_URL } from "@/lib/constants";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { calculateSuccessRatio } from "@/lib/utils/calculations";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 
 // Enhanced Success/Loss Ratio Card Component
 const SuccessLossRatioCard = ({ stats, className }) => {
   const totalTrades = (stats.success || 0) + (stats.loss || 0);
-  const successRatio = totalTrades > 0 ? ((stats.success || 0) / totalTrades) * 100 : 0;
-  const lossRatio = totalTrades > 0 ? ((stats.loss || 0) / totalTrades) * 100 : 0;
+  const successRatio = parseFloat(calculateSuccessRatio(stats.success || 0, totalTrades));
+  const lossRatio = parseFloat(calculateSuccessRatio(stats.loss || 0, totalTrades));
 
   return (
     <div className={`bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-white/40 ${className}`}>
@@ -160,14 +163,7 @@ const RecentTradesTable = ({ trades, formatCurrency }) => {
     });
   }, [trades, sortConfig]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
+  // Utility functions imported from @/lib/utils
 
   const getStatusColor = (profitLoss) => {
     if (profitLoss > 0) return 'text-green-600';
@@ -320,7 +316,7 @@ export default function Dashboard() {
 
   const [toasts, setToasts] = useState([]);
   const toastIdCounter = useRef(0);
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const API_BASE = API_BASE_URL;
 
   const showToast = useCallback((message, type = "error") => {
     toastIdCounter.current += 1;
@@ -385,7 +381,7 @@ export default function Dashboard() {
       };
 
       console.log(`🔄 API Call: ${API_BASE}${endpoint}`);
-      
+
       const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
 
       console.log(`📊 Response Status: ${response.status}`);
@@ -417,11 +413,11 @@ export default function Dashboard() {
     } catch (error) {
       console.error(`❌ API call failed:`, error);
       setBackendConnected(false);
-      
+
       if (error.message.includes('Failed to fetch')) {
         showToast("Cannot connect to backend. Check if server is running.", "error");
       }
-      
+
       throw error;
     }
   }, [API_BASE, router, showToast]);
@@ -438,7 +434,7 @@ export default function Dashboard() {
       try {
         console.log('📊 Fetching: /api/trade-logs/stats');
         const statsData = await apiCall('/api/trade-logs/stats');
-        
+
         if (statsData && statsData.performance) {
           console.log('✅ Stats loaded:', statsData);
           setStats({
@@ -460,7 +456,7 @@ export default function Dashboard() {
       try {
         console.log('📋 Fetching: /api/trade-logs');
         const tradesData = await apiCall('/api/trade-logs?per_page=8&sort_by=created_at&sort_order=desc');
-        
+
         if (tradesData && tradesData.items && Array.isArray(tradesData.items)) {
           console.log(`✅ Loaded ${tradesData.items.length} trades`);
           setRecentTrades(tradesData.items);
@@ -475,7 +471,7 @@ export default function Dashboard() {
 
       setLastUpdate(new Date().toLocaleTimeString());
       showToast("Dashboard loaded successfully", "success");
-      
+
     } catch (error) {
       console.error('❌ Dashboard load error:', error);
       setError(error.message);
@@ -527,23 +523,17 @@ export default function Dashboard() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD"
-    }).format(value || 0);
-  };
+  // Utility functions imported from @/lib/utils
 
   const ToastContainer = () => (
     <div className="fixed top-4 right-4 z-50 space-y-2 p-3 sm:p-0">
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm ${
-            toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
+          className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border-l-4 animate-fade-in text-xs sm:text-sm ${toast.type === "success" ? "bg-green-50 border-green-500 text-green-800" :
             toast.type === "info" ? "bg-blue-50 border-blue-500 text-blue-800" :
-            "bg-red-50 border-red-500 text-red-800"
-          }`}
+              "bg-red-50 border-red-500 text-red-800"
+            }`}
         >
           <div className="flex items-center space-x-2">
             {toast.type === "success" && (
@@ -564,7 +554,7 @@ export default function Dashboard() {
         if (loading) {
           return (
             <div className="flex flex-col items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 sm:h-16 w-12 sm:w-16 border-b-2 border-blue-600"></div>
+              <LoadingSpinner size="lg" />
               <div className="mt-4 text-sm sm:text-base text-slate-600 text-center px-4">Loading dashboard data...</div>
             </div>
           );

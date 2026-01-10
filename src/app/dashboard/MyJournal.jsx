@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import CustomDropdown from "@/components/CustomDropdown";
+import Dropdown from "@/components/ui/Dropdown";
 import {
   Table,
   TableBody,
@@ -22,9 +22,10 @@ import {
   ChevronRight as ChevronRightIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
-import DeleteModal from "@/components/DeleteModal";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+import DeleteModal from "@/components/shared/DeleteModal";
+import { API_BASE_URL } from "@/lib/constants";
+import { formatDate } from "@/lib/utils/format";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function MyJournal() {
   const router = useRouter();
@@ -447,10 +448,7 @@ export default function MyJournal() {
     setShowDetail(true);
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
-    return new Date(dateStr).toLocaleDateString('en-IN');
-  };
+  // formatDate imported from @/lib/utils/format
 
   // Toast Container
   const Toasts = () => (
@@ -548,7 +546,7 @@ export default function MyJournal() {
       {/* Loading / Empty / Table */}
       {loading ? (
         <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+          <LoadingSpinner size="md" />
           <p className="text-slate-600 mt-3 text-sm sm:text-base">Loading trades...</p>
         </div>
       ) : trades.length === 0 ? (
@@ -952,7 +950,7 @@ export default function MyJournal() {
 
                   {/* Strategy & Dates */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <CustomDropdown
+                    <Dropdown
                       name="strategy_id"
                       label="Strategy"
                       placeholder="Select strategy..."
