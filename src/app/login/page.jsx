@@ -1,40 +1,81 @@
+"use client";
+
 // app/login/page.tsx
 import Image from "next/image";
 import AuthForm from "../../components/AuthForm";
 import logo from "@/assets/logo.png";
+import Particles from "@/components/Particles/Particles";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+    <div className="relative flex min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50 overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Particles
+          className="absolute inset-0"
+          particleColors={["#f15f26", "#3f65ad", "#ffffff"]}
+          particleCount={300}
+          particleSpread={10}
+          speed={0.1}
+          particleBaseSize={100}
+          moveParticlesOnHover={true}
+          alphaParticles={false}
+          disableRotation={false}
+        />
+      </div>
+
       {/* Left Side - Branding (hidden on mobile/tablet, visible on desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 items-center justify-center p-6 lg:p-8 xl:p-12">
+      <div className="relative z-10 hidden lg:flex lg:w-1/2 xl:w-3/5 items-center justify-center p-6 lg:p-8 xl:p-12">
         <div className="text-center space-y-2 lg:space-y-2 xl:space-y-2 max-w-sm lg:max-w-md xl:max-w-lg">
           {/* Logo/Brand */}
           <div className="relative">
             <div className="w-52 h-52 lg:w-72 lg:h-72 xl:w-72 xl:h-72 mx-auto flex items-center justify-center">
-              <Image
-                src={logo}
-                alt="TradeFlow Logo"
-                width={288}
-                height={288}
-                priority
-                className="w-full h-full object-contain"
-              />
+              <motion.div
+                initial={{ y: 0 }}
+                animate={{ y: [-10, 10, -10] }}
+                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                className="w-full h-full"
+              >
+                <Image
+                  src={logo}
+                  alt="TradeFlow Logo"
+                  width={288}
+                  height={288}
+                  priority
+                  className="w-full h-full object-contain filter drop-shadow-2xl"
+                />
+              </motion.div>
             </div>
           </div>
 
           {/* App Name */}
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-800 -mt-2 lg:-mt-3 xl:-mt-4">
-            TradeFlow
-          </h1>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+          >
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-800 -mt-2 lg:-mt-3 xl:-mt-4 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
+              TradeFlow
+            </h1>
+          </motion.div>
 
           {/* Tagline */}
-          <p className="text-lg lg:text-xl xl:text-2xl text-slate-600 font-medium leading-relaxed px-2 pt-2 lg:pt-3">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="text-lg lg:text-xl xl:text-2xl text-slate-600 font-medium leading-relaxed px-2 pt-2 lg:pt-3"
+          >
             Streamline your trading experience with intelligent analytics and seamless execution
-          </p>
+          </motion.p>
 
           {/* Feature highlights */}
-          <div className="space-y-3 lg:space-y-4 pt-6 lg:pt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="space-y-3 lg:space-y-4 pt-6 lg:pt-8"
+          >
             <div className="flex items-center justify-center space-x-3">
               <div className="w-2 h-2 bg-gradient-to-r from-[#f15f26] to-[#3f65ad] rounded-full"></div>
               <span className="text-sm lg:text-base text-slate-700 font-medium">Real-time market data</span>
@@ -47,12 +88,12 @@ export default function LoginPage() {
               <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
               <span className="text-sm lg:text-base text-slate-700 font-medium">Secure trading environment</span>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex w-full lg:w-1/2 xl:w-2/5 items-center justify-center p-4 sm:p-6 md:p-8 lg:p-6 xl:p-8">
+      <div className="relative z-10 flex w-full lg:w-1/2 xl:w-2/5 items-center justify-center p-4 sm:p-6 md:p-8 lg:p-6 xl:p-8">
         <div className="max-w-xs sm:max-w-sm md:max-w-md w-full space-y-6 md:space-y-8">
           {/* Mobile/Tablet branding (visible on mobile/tablet, hidden on desktop) */}
           <div className="text-center lg:hidden mb-3 md:mb-4">
@@ -85,9 +126,14 @@ export default function LoginPage() {
           </div>
 
           {/* Auth Form */}
-          <div className="w-full">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="w-full"
+          >
             <AuthForm />
-          </div>
+          </motion.div>
 
           {/* Security badge */}
           <div className="text-center pt-3 md:pt-4">

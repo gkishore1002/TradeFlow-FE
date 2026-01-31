@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import StarBorder from "./StarBorder/StarBorder";
+import { motion } from "framer-motion";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -232,241 +234,261 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm shadow-2xl rounded-3xl p-6 sm:p-8 space-y-6 border border-white/20 max-w-md mx-auto">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium">
-          {success}
-        </div>
-      )}
-
-      {isSignUp ? (
-        // SIGNUP FORM
-        <form onSubmit={handleSignup} className="space-y-4">
-          {/* First Name Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              First Name
-            </label>
-            <input
-              type="text"
-              name="firstName"
-              value={signupData.firstName}
-              onChange={handleSignupChange}
-              placeholder="John"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
-              required
-              disabled={loading}
-            />
+    <StarBorder as="div" className="w-full max-w-md mx-auto" color="#FF4500" thickness={4}>
+      <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-3xl p-6 sm:p-8 space-y-6 border border-white/50 w-full transition-all duration-300 hover:shadow-[0_0_40px_-10px_rgba(241,95,38,0.3)]">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium">
+            {error}
           </div>
-
-          {/* Last Name Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Last Name
-            </label>
-            <input
-              type="text"
-              name="lastName"
-              value={signupData.lastName}
-              onChange={handleSignupChange}
-              placeholder="Doe"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
-              required
-              disabled={loading}
-            />
+        )}
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium">
+            {success}
           </div>
+        )}
 
-          {/* Email Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={signupData.email}
-              onChange={handleSignupChange}
-              placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
-              required
-              disabled={loading}
-            />
-          </div>
+        {isSignUp ? (
+          // SIGNUP FORM
+          <form onSubmit={handleSignup} className="space-y-4">
+            {/* First Name Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                First Name
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                transition={{ duration: 0.2 }}
+                type="text"
+                name="firstName"
+                value={signupData.firstName}
+                onChange={handleSignupChange}
+                placeholder="John"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm"
+                required
+                disabled={loading}
+              />
+            </div>
 
-          {/* Password Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
+            {/* Last Name Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Last Name
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                transition={{ duration: 0.2 }}
+                type="text"
+                name="lastName"
+                value={signupData.lastName}
+                onChange={handleSignupChange}
+                placeholder="Doe"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Email Address
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                transition={{ duration: 0.2 }}
+                type="email"
+                name="email"
+                value={signupData.email}
+                onChange={handleSignupChange}
+                placeholder="you@example.com"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <motion.input
+                  whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                  transition={{ duration: 0.2 }}
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={signupData.password}
+                  onChange={handleSignupChange}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm pr-10"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Minimum 6 characters</p>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Confirm Password
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                transition={{ duration: 0.2 }}
                 type={showPassword ? "text" : "password"}
-                name="password"
-                value={signupData.password}
+                name="confirmPassword"
+                value={signupData.confirmPassword}
                 onChange={handleSignupChange}
                 placeholder="••••••••"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm"
                 required
                 disabled={loading}
               />
+            </div>
+
+            {/* Sign Up Button */}
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(241, 95, 38, 0.4)" }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:bg-[#d94e1f] disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-base"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Creating Account...</span>
+                </div>
+              ) : (
+                "Sign Up"
+              )}
+            </motion.button>
+
+            {/* Toggle to Login */}
+            <p className="text-center text-xs sm:text-sm text-slate-600">
+              Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={toggleMode}
                 disabled={loading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
               >
-                {showPassword ? (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
+                Sign in
               </button>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Minimum 6 characters</p>
-          </div>
-
-          {/* Confirm Password Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type={showPassword ? "text" : "password"}
-              name="confirmPassword"
-              value={signupData.confirmPassword}
-              onChange={handleSignupChange}
-              placeholder="••••••••"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          {/* Sign Up Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#d94e1f] transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Creating Account...</span>
-              </div>
-            ) : (
-              "Sign Up"
-            )}
-          </button>
-
-          {/* Toggle to Login */}
-          <p className="text-center text-xs sm:text-sm text-slate-600">
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={toggleMode}
-              disabled={loading}
-              className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
-            >
-              Sign in
-            </button>
-          </p>
-        </form>
-      ) : (
-        // LOGIN FORM
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={loginData.email}
-              onChange={handleLoginChange}
-              placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          {/* Password Field */}
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={loginData.password}
+            </p>
+          </form>
+        ) : (
+          // LOGIN FORM
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Email Address
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                transition={{ duration: 0.2 }}
+                type="email"
+                name="email"
+                value={loginData.email}
                 onChange={handleLoginChange}
-                placeholder="••••••••"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#f15f26] focus:border-[#f15f26] focus:outline-none transition-all duration-200 text-xs sm:text-sm pr-10"
+                placeholder="you@example.com"
+                className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm"
                 required
                 disabled={loading}
               />
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <motion.input
+                  whileFocus={{ scale: 1.02, borderColor: "#f15f26", boxShadow: "0 0 0 4px rgba(241, 95, 38, 0.1)" }}
+                  transition={{ duration: 0.2 }}
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white/50 p-3 sm:p-4 text-slate-800 placeholder-slate-400 focus:outline-none text-xs sm:text-sm pr-10"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Sign In Button */}
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(241, 95, 38, 0.4)" }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:bg-[#d94e1f] disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-base"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing In...</span>
+                </div>
+              ) : (
+                "Sign In"
+              )}
+            </motion.button>
+
+            {/* Toggle to Sign Up */}
+            <p className="text-center text-xs sm:text-sm text-slate-600">
+              Don't have an account?{" "}
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={toggleMode}
                 disabled={loading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
               >
-                {showPassword ? (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
+                Sign up
               </button>
-            </div>
-          </div>
-
-          {/* Sign In Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#f15f26] text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#d94e1f] transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-base"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Signing In...</span>
-              </div>
-            ) : (
-              "Sign In"
-            )}
-          </button>
-
-          {/* Toggle to Sign Up */}
-          <p className="text-center text-xs sm:text-sm text-slate-600">
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={toggleMode}
-              disabled={loading}
-              className="text-[#f15f26] hover:text-[#d94e1f] font-semibold hover:underline transition-colors duration-200 disabled:opacity-50"
-            >
-              Sign up
-            </button>
-          </p>
-        </form>
-      )}
-    </div>
+            </p>
+          </form>
+        )}
+      </div>
+    </StarBorder>
   );
 }
