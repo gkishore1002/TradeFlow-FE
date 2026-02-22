@@ -127,13 +127,13 @@ const SuccessLossRatioCard = ({ stats, className }) => {
         <div className="text-center p-2 sm:p-0">
           <p className="text-xs text-slate-600 mb-1">Total P&L</p>
           <p className={`text-base sm:text-lg lg:text-xl font-bold ${(stats.totalPnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ${(stats.totalPnl || 0).toFixed(2)}
+            ₹{(stats.totalPnl || 0).toFixed(2)}
           </p>
         </div>
         <div className="text-center p-2 sm:p-0">
           <p className="text-xs text-slate-600 mb-1">Avg P&L</p>
           <p className="text-base sm:text-lg lg:text-xl font-bold text-slate-800">
-            ${totalTrades > 0 ? ((stats.totalPnl || 0) / totalTrades).toFixed(0) : '0'}
+            ₹{totalTrades > 0 ? ((stats.totalPnl || 0) / totalTrades).toFixed(0) : '0'}
           </p>
         </div>
       </div>
@@ -232,11 +232,11 @@ const RecentTradesTable = ({ trades, formatCurrency }) => {
               <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs mb-3">
                 <div>
                   <p className="text-slate-600 text-xs">Entry Price</p>
-                  <p className="font-semibold text-slate-900">${(trade.entry_price || 0).toFixed(2)}</p>
+                  <p className="font-semibold text-slate-900">₹{(trade.entry_price || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-slate-600 text-xs">Exit Price</p>
-                  <p className="font-semibold text-slate-900">${(trade.exit_price || 0).toFixed(2)}</p>
+                  <p className="font-semibold text-slate-900">₹{(trade.exit_price || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-slate-600 text-xs">Quantity</p>
@@ -270,8 +270,8 @@ const RecentTradesTable = ({ trades, formatCurrency }) => {
             {sortedTrades.map((trade, index) => (
               <tr key={trade.id || index} className="border-b border-slate-200 hover:bg-slate-50 transition">
                 <td className="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-slate-900 text-xs sm:text-sm">{trade.symbol || 'N/A'}</td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-right text-slate-600 text-xs sm:text-sm">${(trade.entry_price || 0).toFixed(2)}</td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-right text-slate-600 text-xs sm:text-sm">${(trade.exit_price || 0).toFixed(2)}</td>
+                <td className="px-4 sm:px-6 py-3 sm:py-4 text-right text-slate-600 text-xs sm:text-sm">₹{(trade.entry_price || 0).toFixed(2)}</td>
+                <td className="px-4 sm:px-6 py-3 sm:py-4 text-right text-slate-600 text-xs sm:text-sm">₹{(trade.exit_price || 0).toFixed(2)}</td>
                 <td className="px-4 sm:px-6 py-3 sm:py-4 text-right text-slate-600 text-xs sm:text-sm">{trade.quantity || 'N/A'}</td>
                 <td className={`px-4 sm:px-6 py-3 sm:py-4 text-right font-semibold text-xs sm:text-sm ${getStatusColor(trade.profit_loss || 0)}`}>
                   {formatCurrency(trade.profit_loss || 0)}
@@ -528,9 +528,9 @@ export default function Dashboard() {
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD"
+      currency: "INR"
     }).format(value || 0);
   };
 
@@ -648,7 +648,7 @@ export default function Dashboard() {
                   </div>
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ml-3 ${stats.totalPnl >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                     <svg className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stats.totalPnl >= 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 3h12M6 8h12m-12 5 8.5 8M6 13h3m0 0c6.667 0 6.667-10 0-10"></path>
                     </svg>
                   </div>
                 </div>
