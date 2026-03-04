@@ -290,7 +290,7 @@ export default function Profile() {
   const tabs = [{ id: "profile", label: "Profile", icon: PersonIcon }];
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -314,7 +314,7 @@ export default function Profile() {
             <div className="mb-6 sm:mb-8 flex items-center gap-2 text-xs sm:text-sm">
               <button
                 onClick={navigateToDashboard}
-                className="text-[#f15f26] hover:text-[#d94e1f] font-medium transition-colors hover:underline"
+                className="text-[#3b82f6] hover:text-[#2563eb] font-medium transition-colors hover:underline"
               >
                 Dashboard
               </button>
@@ -336,8 +336,8 @@ export default function Profile() {
 
             {/* Connection Status */}
             {!backendConnected && (
-              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-orange-800 text-sm">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm">
                   ℹ️ Using local storage - backend offline
                 </p>
               </div>
@@ -403,7 +403,7 @@ export default function Profile() {
                             }}
                             className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-all text-left text-sm ${
                               activeTab === tab.id
-                                ? "bg-[#f15f26]/10 border-l-4 border-[#f15f26] text-[#f15f26] font-semibold"
+                                ? "bg-[#3b82f6]/10 border-l-4 border-[#3b82f6] text-[#3b82f6] font-semibold"
                                 : "text-slate-700 hover:bg-slate-50"
                             }`}
                           >
@@ -429,7 +429,7 @@ export default function Profile() {
                         {!isEditing && (
                           <button
                             onClick={() => setIsEditing(true)}
-                            className="px-4 py-2 bg-[#f15f26] hover:bg-[#d94e1f] text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
+                            className="px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
                           >
                             <svg
                               className="w-4 h-4"
@@ -466,7 +466,7 @@ export default function Profile() {
                                 disabled={!isEditing}
                                 className={`w-full px-4 py-2.5 text-sm rounded-lg border transition-all ${
                                   isEditing
-                                    ? "border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#f15f26]"
+                                    ? "border-slate-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                                     : "border-slate-200 bg-slate-50 text-slate-700 cursor-not-allowed"
                                 }`}
                               />
@@ -562,7 +562,7 @@ export default function Profile() {
                             <button
                               onClick={handleSave}
                               disabled={isSaving}
-                              className="px-6 py-2.5 rounded-lg bg-[#f15f26] hover:bg-[#d94e1f] text-white font-medium text-sm transition-all disabled:opacity-50 flex items-center gap-2"
+                              className="px-6 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium text-sm transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                               {isSaving ? (
                                 <>

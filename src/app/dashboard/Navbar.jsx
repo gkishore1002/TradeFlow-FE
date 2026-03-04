@@ -234,6 +234,36 @@ const Navbar = ({
     }
   };
 
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      const token = getAuthToken();
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_BASE}/api/notifications/mark-all-read`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include",
+          mode: "cors",
+        },
+      );
+
+      if (response.ok) {
+        // Update local state
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error("❌ Failed to mark all notifications as read:", error);
+    }
+  };
+
   // Navigate to notification link or notifications page
   const handleNotificationClick = (notification) => {
     if (!notification.is_read) {
@@ -299,6 +329,16 @@ const Navbar = ({
       setTimeout(() => {
         if (setActiveTab) setActiveTab("notifications");
       }, 100);
+    }
+  };
+
+  // Handle logo click - navigate to dashboard
+  const handleLogoClick = () => {
+    if (setActiveTab) {
+      setActiveTab("dashboard");
+    }
+    if (window.location.pathname !== "/dashboard") {
+      router.push("/dashboard");
     }
   };
 
@@ -536,7 +576,10 @@ const Navbar = ({
             </button>
 
             {/* Logo & App Name */}
-            <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+            <button
+              onClick={handleLogoClick}
+              className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 hover:opacity-80 transition-opacity focus:outline-none"
+            >
               {/* Logo Image */}
               <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 flex-shrink-0 -my-2 sm:-my-2.5 md:-my-3">
                 <Image
@@ -553,7 +596,7 @@ const Navbar = ({
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent whitespace-nowrap hidden sm:block">
                 TradeFlow
               </h2>
-            </div>
+            </button>
 
             {/* Live Status */}
             <div className="flex items-center gap-1.5 sm:gap-2 ml-1 sm:ml-2">
@@ -615,12 +658,25 @@ const Navbar = ({
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={goToNotifications}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                    >
-                      View All
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={goToNotifications}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                      >
+                        View All
+                      </button>
+                      {unreadCount > 0 && (
+                        <>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            onClick={markAllAsRead}
+                            className="text-xs text-green-600 hover:text-green-700 font-medium hover:underline"
+                          >
+                            Mark all as read
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Notification List */}
