@@ -21,6 +21,7 @@ import {
   Visibility as VisibilityIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
+import CustomDropdown from "../../components/CustomDropdown";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
@@ -47,6 +48,9 @@ export default function SuccessLogs() {
   const [showTradesModal, setShowTradesModal] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [showTradeDetailModal, setShowTradeDetailModal] = useState(false);
+
+  // Stats strategy selection
+  const [selectedStatsStrategy, setSelectedStatsStrategy] = useState("Overall");
 
   // Pagination and Search State
   const [currentPage, setCurrentPage] = useState(1);
@@ -1157,44 +1161,88 @@ export default function SuccessLogs() {
         {/* Statistics Card */}
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-green-200">
           <h3 className="text-base sm:text-lg font-bold text-black mb-4">
-            Overall Stats
+            Strategy Stats
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-              <span className="text-xs sm:text-sm text-black">
-                Total Trades
-              </span>
-              <span className="text-lg sm:text-2xl font-bold text-[#3b82f6]">
-                {stats.performance?.total_trades || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-              <span className="text-xs sm:text-sm text-black">Win Rate</span>
-              <span className="text-lg sm:text-2xl font-bold text-green-600">
-                {stats.performance?.win_rate?.toFixed(1) || 0}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-              <span className="text-xs sm:text-sm text-black">Total P&L</span>
-              <span
-                className={`text-lg sm:text-2xl font-bold ${(stats.performance?.total_pnl || 0) >= 0 ? "text-green-600" : "text-red-600"}`}
-              >
-                {formatCurrency(stats.performance?.total_pnl || 0)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-              <span className="text-xs sm:text-sm text-black">Wins</span>
-              <span className="text-lg sm:text-2xl font-bold text-green-600">
-                {stats.counts?.success || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-              <span className="text-xs sm:text-sm text-black">Losses</span>
-              <span className="text-lg sm:text-2xl font-bold text-red-600">
-                {stats.counts?.loss || 0}
-              </span>
-            </div>
-          </div>
+          <CustomDropdown
+            options={[
+              { value: "Overall", label: "Overall" },
+              ...strategies.map((strategy) => ({
+                value: strategy.name,
+                label: strategy.name,
+              })),
+            ]}
+            value={selectedStatsStrategy}
+            onChange={(e) => setSelectedStatsStrategy(e.target.value)}
+            label="Select Strategy"
+            className="mb-4"
+          />
+          {(() => {
+            const selectedStrategyData =
+              selectedStatsStrategy === "Overall"
+                ? stats
+                : strategyTrades.find(
+                    (s) => s.strategy_name === selectedStatsStrategy
+                  ) || {
+                    total_trades: 0,
+                    success_trades: 0,
+                    loss_trades: 0,
+                    win_rate: 0,
+                    total_pnl: 0,
+                  };
+            const currentStats = {
+              counts: {
+                success: Number(selectedStrategyData.success_trades ?? selectedStrategyData.counts?.success ?? 0),
+                loss: Number(selectedStrategyData.loss_trades ?? selectedStrategyData.counts?.loss ?? 0),
+              },
+              performance: {
+                total_trades: Number(selectedStrategyData.total_trades ?? selectedStrategyData.performance?.total_trades ?? 0),
+                win_rate: Number(selectedStrategyData.win_rate ?? selectedStrategyData.performance?.win_rate ?? 0),
+                total_pnl: Number(selectedStrategyData.total_pnl ?? selectedStrategyData.performance?.total_pnl ?? 0),
+              },
+            };
+            return (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-xs sm:text-sm text-black">
+                    Total Trades
+                  </span>
+                  <span className="text-lg sm:text-2xl font-bold text-[#3b82f6]">
+                    {currentStats.performance.total_trades}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-xs sm:text-sm text-black">Win Rate</span>
+                  <span className="text-lg sm:text-2xl font-bold text-green-600">
+                    {currentStats.performance.win_rate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-xs sm:text-sm text-black">Total P&L</span>
+                  <span
+                    className={`text-lg sm:text-2xl font-bold ${
+                      currentStats.performance.total_pnl >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {formatCurrency(currentStats.performance.total_pnl)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-xs sm:text-sm text-black">Wins</span>
+                  <span className="text-lg sm:text-2xl font-bold text-green-600">
+                    {currentStats.counts.success}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-xs sm:text-sm text-black">Losses</span>
+                  <span className="text-lg sm:text-2xl font-bold text-red-600">
+                    {currentStats.counts.loss}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
